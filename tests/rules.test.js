@@ -12,7 +12,7 @@
 const path = require('path');
 const game = require(path.resolve(__dirname, '..', 'js', 'game.js'));
 
-const { computeWinner, totalOf, TRUMPS, VESSELS, ACT_I } = game;
+const { computeWinner, totalOf, TRUMPS, VESSELS, ACT_I, rollDraft, MAX_COPIES, BASE_LOADOUT } = game;
 
 let passed = 0;
 let failed = 0;
@@ -101,6 +101,50 @@ check('3 opponents', ACT_I.opponents.length, 3);
 check('final opponent cheats', ACT_I.opponents[2].cheat, true);
 check('only the final opponent cheats',
   ACT_I.opponents.filter((o) => o.cheat).length, 1);
+
+/* ---------------------------------------------------------
+   Trump draft
+   --------------------------------------------------------- */
+
+section('Trump draft');
+
+const ALL = Object.keys(TRUMPS);
+
+check('offers three cards from an empty deck',
+  rollDraft([], ALL, 3).length, 3);
+
+const offer = rollDraft([], ALL, 3);
+check('every offer comes from the pool',
+  offer.every((id) => ALL.includes(id)), true);
+check('a single offer has no duplicates',
+  new Set(offer).size, offer.length);
+
+check('offers what remains when the pool is small',
+  rollDraft([], ['seersEye', 'charity'], 3).length, 2);
+
+// A card at the copy cap must not be offered while others are available.
+const maxed = [];
+for (let i = 0; i < MAX_COPIES; i++) maxed.push('seersEye');
+const cappedOffer = rollDraft(maxed, ['seersEye', 'charity', 'graveDebt'], 1);
+check('does not offer a card already at the copy cap',
+  cappedOffer.includes('seersEye'), false);
+
+// If literally everything is capped, it must still offer something.
+const allMaxed = [];
+ALL.forEach((id) => { for (let i = 0; i < MAX_COPIES; i++) allMaxed.push(id); });
+check('falls back rather than returning nothing',
+  rollDraft(allMaxed, ALL, 3).length, 3);
+
+check('starting deck has 4 trumps', BASE_LOADOUT.length, 4);
+check('starting deck only holds real trumps',
+  BASE_LOADOUT.every((id) => !!TRUMPS[id]), true);
+check('starting deck is all common rarity',
+  BASE_LOADOUT.every((id) => TRUMPS[id].rarity === 1), true);
+
+// Statistical sanity: repeated rolls should surface more than one distinct card.
+const seen = new Set();
+for (let i = 0; i < 60; i++) rollDraft([], ALL, 3).forEach((id) => seen.add(id));
+check('draft is not stuck on one card', seen.size > 6, true);
 
 /* ---------------------------------------------------------
    Summary

@@ -2,7 +2,7 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v1.1.0 — Act I playable, offline APK shipping.**
+**Status: v1.2.0 — Act I with trump drafting, difficulty curve, offline APK shipping.**
 Target: **v2.0 — Steam + Android release** with real-time PvP.
 
 ---
@@ -63,14 +63,15 @@ Each milestone has a **gate**. Do not start the next one until the gate passes.
 **Gate:** a full Act I run completes without a runtime error; the boss cheat reads as
 *fair* (the player can explain why they lost).
 
-### M2 — Feel pass *(next, ~2 weeks)*
+### M2 — Feel pass 🔶 *in progress (v1.2 partial)*
 **Goal:** make it *feel* like horror, not a web page with dark colours.
-- Card deal/reveal animation with weight; no snapping
-- Damage feedback: blade lurch, screen shake, blood vignette
-- Boss cheat moment: deliberate slow-motion + sound dropout
-- Candle flicker tied to Vigil (more danger → less light)
-- Ambient loop: drone with an unresolved fifth
-- Haptics on Android (`navigator.vibrate`)
+- ✅ Haptics on Android (`navigator.vibrate`, VIBRATE permission)
+- ✅ Reduced-motion mode (OS default + in-game toggle)
+- ✅ Blade lurch + shake on damage
+- ✅ Card deal animation, staggered with a per-card sound
+- ⬜ Boss cheat moment: deliberate slow-motion + sound dropout
+- ⬜ Candle flicker tied to Vigil (more danger → less light)
+- ⬜ Ambient loop with an unresolved fifth
 - **Gate:** silent-playtesters describe the game as "tense" unprompted.
 
 ### M3 — Act II + progression depth *(~3 weeks)*
@@ -111,9 +112,9 @@ Size: **S** ≤ 1 day · **M** ≈ 2–3 days · **L** ≈ 1 week · **XL** > 1 
 | # | Task | Size | Notes |
 |---|---|---|---|
 | 1 | Release signing + AAB | S | Generate keystore now, store off-repo |
-| 2 | Save migration & corruption recovery | S | `SAVE_KEY` versioning; currently silent-fails |
+| 2 | ~~Save migration & corruption recovery~~ ✅ **shipped v1.2** | S | `SAVE_VERSION` + field sanitising |
 | 3 | Accessibility: colour-blind safe damage cues | M | Never rely on red/green alone |
-| 4 | Reduce-motion setting | S | Respect `prefers-reduced-motion` |
+| 4 | ~~Reduce-motion setting~~ ✅ **shipped v1.2** | S | OS default + manual toggle |
 | 5 | Pause/resume correctness on Android | S | Verify lifecycle on a real device |
 | 6 | Crash-free session audit | M | Manual matrix across 5 Android versions |
 
@@ -121,7 +122,7 @@ Size: **S** ≤ 1 day · **M** ≈ 2–3 days · **L** ≈ 1 week · **XL** > 1 
 
 | # | Task | Size | Notes |
 |---|---|---|---|
-| 7 | Trump deck-building between acts | L | Turns a card game into a *build* |
+| 7 | ~~Trump deck-building between acts~~ ✅ **shipped v1.2** | L | Turns a card game into a *build* |
 | 8 | Boss personality: taunts, tempo | M | Text + timing, no art needed |
 | 9 | Streak / daily seed | M | Deterministic seeded runs, offline-friendly |
 | 10 | Loss screen that teaches | S | Show *why* you lost: the card you ignored |
@@ -292,10 +293,14 @@ other milestone combined.
 
 ## 11. Immediate next three tasks
 
-1. **M2-1:** Card deal animation with weight and a deal sound per card. *(S)*
-2. **M2-2:** Blade lurch + haptics on damage. *(S)*
-3. **P1-7:** Trump deck-building between duels — the single highest-leverage change for
-   retention, because it converts a card game into a *build*. *(L)*
+Shipped in v1.2: damage haptics, reduced motion, the loss screen that teaches, save
+migration, and **trump deck-building** (the highest-leverage retention change).
 
-Do these in that order. The first two are cheap and change how the product is perceived;
-the third is expensive and changes why people return.
+Next, in order:
+
+1. **M2-3:** The boss cheat as a set-piece — slow motion, sound dropout, a held breath.
+   Right now it reads as a rules event; it should read as a betrayal. *(M)*
+2. **Balance harness:** a headless simulator running 500 duels per opponent to tune
+   `accuracy` with data rather than feel. The current curve was set by jaw, not numbers. *(M)*
+3. **P1-9:** Daily seeded run — a deterministic shuffle shared by everyone who plays that
+   day. Offline-friendly, zero server, enormous replay value. *(M)*

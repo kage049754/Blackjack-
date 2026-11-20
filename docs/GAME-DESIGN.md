@@ -216,6 +216,35 @@ visible to your opponent, so the matchup is a read.
 | **The Confessor** | Draws a trump at the start of **every** round. | Breadth |
 | **The Hollow Bride** | Takes **1 less damage** from any single round. | Survival |
 
+### The Trump Draft
+
+Between duels you are offered **three trump cards** and keep one. It is added to your
+**loadout** — the deck your trump hand is drawn from for the rest of the act. Hand size
+stays at 3; the *deck* behind it grows.
+
+This is the difference between a card game and a build. It also makes the draft a real
+decision: a second copy of a rare beats a first copy of a legendary if the rare is the
+one that saves you.
+
+- Maximum **3 copies** of any single trump.
+- Offers are drawn only from your unlocked pool.
+- The loadout resets each act — every run is a fresh build, not a permanent arms race.
+
+### The Difficulty Curve
+
+Opponents have an **accuracy** rating. On any decision there is a chance the opponent
+misplays — reads the shoe correctly and then does the wrong thing anyway. This is what
+separates a tutorial from a wall.
+
+| Opponent | Trumps | Accuracy | Cheats |
+|---|---|---|---|
+| The Pale Croupier | 1 | 62% | — |
+| The Mourner | 2 | 84% | — |
+| The Veiled Dealer | 3 | 96% | once per duel |
+
+Before the curve existed, a naive player almost never won a single duel. A difficulty
+that cannot be climbed is not difficulty, it is a closed door.
+
 ### Meta progression
 
 - **XP per duel** — win or lose, you learn. Levels unlock trumps into your pool.

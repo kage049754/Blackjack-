@@ -794,3 +794,83 @@ body{ overflow: hidden; }
   .vessel{ min-height: 0; }
   .title-stats{ gap: 1.1rem; }
 }
+
+/* ============================================================
+   TRUMP DRAFT
+   ============================================================ */
+
+.draft-card{ max-width: 720px; }
+
+.draft-title{
+  font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--bone);
+}
+
+.draft-sub{
+  font-size: .95rem; color: var(--bone-dim); font-style: italic;
+  margin: .7rem 0 1.5rem;
+}
+
+.draft-grid{
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: .6rem; margin-bottom: 1.2rem;
+}
+
+.draft-option{
+  position: relative; display: flex; flex-direction: column; gap: .45rem;
+  text-align: left; padding: .95rem .8rem; min-height: 150px;
+  border: 1px solid rgba(176,141,79,.28);
+  background: linear-gradient(160deg, rgba(30,18,16,.94), rgba(9,7,7,.97));
+  color: var(--bone); cursor: pointer; font-family: var(--body);
+  transition: border-color .22s, transform .22s, box-shadow .22s;
+  animation: deal-in .35s cubic-bezier(.2,.8,.3,1) both;
+}
+
+.draft-option:hover{
+  border-color: var(--amber); transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(0,0,0,.75), 0 0 22px rgba(232,176,99,.2);
+}
+
+.draft-rarity{ position: absolute; top: 0; right: 0; width: 4px; height: 100%; }
+.draft-option[data-rarity="1"] .draft-rarity{ background: rgba(154,145,127,.55); }
+.draft-option[data-rarity="2"] .draft-rarity{ background: var(--gold); }
+.draft-option[data-rarity="3"] .draft-rarity{ background: var(--blood-lit); box-shadow: 0 0 12px rgba(198,41,31,.8); }
+.draft-option[data-rarity="3"]{ border-color: rgba(142,27,24,.6); }
+.draft-option[data-rarity="3"] .trump-name{ color: var(--blood-lit); }
+
+.draft-count{
+  margin-top: auto; font-family: var(--serif); font-size: .48rem;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--bone-faint);
+}
+
+.draft-hint{
+  font-family: var(--serif); font-size: .5rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--bone-faint);
+}
+
+@media (max-width: 620px){
+  .draft-grid{ grid-template-columns: 1fr; }
+  .draft-option{ min-height: 0; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   Everything decorative stops; the game stays fully playable.
+   ============================================================ */
+
+body.reduce-motion *,
+body.reduce-motion *::before,
+body.reduce-motion *::after{
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
+}
+
+body.reduce-motion .grain{ display: none; }
+body.reduce-motion .candlelight{ animation: none; }
+body.reduce-motion .blade-head{ animation: none; }
+body.reduce-motion .shake{ animation: none; }
+
+@media (prefers-reduced-motion: reduce){
+  .grain{ display: none; }
+}

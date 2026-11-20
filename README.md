@@ -24,15 +24,19 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v1.1.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v1.1.0/TheLastHand-v1.1.0.apk)**
+**[⬇ The Last Hand v1.2.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v1.2.0/TheLastHand-v1.2.0.apk)**
 
 - 5.1 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
-- **SHA-256** `67b11335829429bf99871c857ece751b01ae94b6a24c6a265f48c39924d087f1`
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
 
-**v1.1.0 adds:** four playable **Vessels**, a three-opponent **Act I gauntlet**
+**v1.2.0 adds:** **trump drafting** — after each won duel, pick 1 of 3 cards and build
+the deck your trump hand draws from. Plus a **difficulty curve** (opponents now misplay
+at different rates), **haptics**, a **reduced-motion** mode, save migration, and a loss
+screen that tells you what went wrong.
+
+**v1.1.0 added:** four playable **Vessels**, a three-opponent **Act I gauntlet**
 (Vigil carries between duels), a **boss that cheats**, candles and rank progression,
 and a title screen.
 
@@ -118,6 +122,7 @@ Total bundle: **~426 KB**.
 | Tap **Stand** or `S` | Lock your hand |
 | Tap any **Trump** | Play it — trumps do **not** consume your turn |
 | **Sound** button | Toggle procedural audio (synthesised, no asset files) |
+| **Motion** button | Reduced-motion mode (also follows your OS setting) |
 
 Turns are 20 seconds. Time out and you're forced to stand.
 
@@ -130,10 +135,19 @@ Turns are 20 seconds. Time out and you're forced to stand.
 | **The Confessor** | Draws a **second trump** every round | 5 wins |
 | **The Hollow Bride** | Takes **one less** Vigil of damage each round | 8 wins |
 
+## The Trump Draft
+
+Win a duel and you are offered **three trumps**; keep one. It joins your **loadout** —
+the deck your trump hand is drawn from for the rest of the act. Max 3 copies of any card.
+
+This is the difference between playing a card game and building one. A second copy of a
+rare usually beats a first copy of a legendary.
+
 ## Act I — The Gauntlet
 
 Three opponents in sequence, and **your Vigil carries between them** — you only heal 2
-after a win. The Pale Croupier, then The Mourner, then **The Veiled Dealer**, who cheats
+after a win. Each opponent misplays at a different rate, from the Croupier's 62% to the
+Dealer's 96%. The Pale Croupier, then The Mourner, then **The Veiled Dealer**, who cheats
 exactly once per duel, and only when it is about to lose. That is the act's teaching
 moment: save a trump for the end.
 
@@ -151,7 +165,10 @@ moment: save a trump for the end.
 - ✅ Mobile hardening — safe-area insets, 44 px tap targets, no hover stick, no scroll
 - ✅ **4 Vessels** with passives, unlocked by progression
 - ✅ **Act I gauntlet** with a cheating boss and Vigil carried between duels
-- ✅ **28 automated tests** (`npm test`) — ruleset, both-bust rule, content integrity
+- ✅ **Trump drafting** — build your own trump deck between duels
+- ✅ **Difficulty curve** — opponents have an accuracy rating and misplay accordingly
+- ✅ **Haptics** on damage (Android), **reduced-motion** mode, save migration
+- ✅ **38 automated tests** (`npm test`) — ruleset, both-bust rule, draft maths, content integrity
 
 ## Not built yet
 
@@ -177,7 +194,7 @@ docs/ROADMAP.md            master roadmap: milestones, backlog, risks, timeline
 docs/REFERENCES.md         design references, code references, CC0 asset sources
 scripts/make_icons.py      regenerates every icon and splash screen
 scripts/build-www.js       assembles + verifies the offline bundle
-tests/rules.test.js        28 ruleset + content tests (npm test)
+tests/rules.test.js        38 ruleset + draft + content tests (npm test)
 capacitor.config.json      Capacitor config (appId com.lasthand.game)
 android/                   complete Android Studio / Gradle project
 .github/workflows/         cloud APK build
@@ -204,7 +221,7 @@ committed that you can't reproduce.
 ## Testing
 
 ```bash
-npm test               # 28 ruleset + content assertions
+npm test               # 38 ruleset, draft + content assertions
 npm run verify         # tests + offline bundle check + Android resource check
 ```
 

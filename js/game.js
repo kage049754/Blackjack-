@@ -33,6 +33,13 @@
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  /** Short haptic pulse where the platform supports it; silent no-op elsewhere. */
+  function haptic(pattern) {
+    try {
+      if (navigator && typeof navigator.vibrate === 'function') navigator.vibrate(pattern);
+    } catch (e) { /* not supported — fine */ }
+  }
+
   /* ---------------------------------------------------------
      Vessels — playable characters. Every passive is visible to
      the opponent before the deal, so the matchup is a read.
@@ -83,14 +90,16 @@
         id: 'croupier',
         name: 'The Pale Croupier',
         line: 'Deals without looking at the cards.',
-        startTrumps: 2,
+        startTrumps: 1,
+        accuracy: 0.62,
         cheat: false
       },
       {
         id: 'mourner',
         name: 'The Mourner',
         line: 'She bets what she has already lost.',
-        startTrumps: 3,
+        startTrumps: 2,
+        accuracy: 0.84,
         cheat: false
       },
       {
@@ -98,6 +107,7 @@
         name: 'The Veiled Dealer',
         line: 'You have never seen its hands in the same place twice.',
         startTrumps: 3,
+        accuracy: 0.96,
         cheat: true
       }
     ]
@@ -191,20 +201,44 @@
      2. Progression / save
      --------------------------------------------------------- */
 
+  const SAVE_VERSION = 2;
+
+  // NB: must be declared before loadSave() runs — `const` is in the temporal
+  // dead zone until this line executes.
   let save = loadSave();
+
+  function blankSave() {
+    return { version: SAVE_VERSION, wins: 0, duels: 0, candles: 0, seenIntro: false, reduceMotion: false };
+  }
+
+  /** Non-negative integer, or the fallback. Guards against corrupt saves. */
+  function safeInt(value, fallback, max) {
+    const n = Number(value);
+    if (!isFinite(n) || n < 0) return fallback;
+    const i = Math.floor(n);
+    return typeof max === 'number' ? Math.min(i, max) : i;
+  }
 
   function loadSave() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (raw) {
         const p = JSON.parse(raw);
-        if (typeof p.wins === 'number' && typeof p.duels === 'number') {
-          if (typeof p.candles !== 'number') p.candles = 0;
-          return p;
+        if (p && typeof p === 'object') {
+          const out = blankSave();
+          out.wins = safeInt(p.wins, 0, 1e6);
+          out.duels = safeInt(p.duels, 0, 1e6);
+          out.candles = safeInt(p.candles, 0, 1e9);
+          out.seenIntro = !!p.seenIntro;
+          out.reduceMotion = !!p.reduceMotion;
+
+          // migration hook: anything older than v2 is upgraded field-by-field
+          out.version = SAVE_VERSION;
+          return out;
         }
       }
-    } catch (e) { /* private mode, corrupt data */ }
-    return { wins: 0, duels: 0, candles: 0, seenIntro: false };
+    } catch (e) { /* private mode, corrupt data — fall through to a fresh save */ }
+    return blankSave();
   }
 
   function writeSave() {
@@ -376,6 +410,7 @@
       vessel: opts.vessel || null,
       cheat: !!opts.cheat,
       cheatUsed: false,
+      accuracy: typeof opts.accuracy === 'number' ? opts.accuracy : 1,
       startTrumps: opts.startTrumps || 0
     };
   }
@@ -393,8 +428,15 @@
     timeLeft: TURN_SECONDS,
     running: false,
     vesselId: 'widow',
-    opponentIndex: 0
+    opponentIndex: 0,
+    loadout: [],
+    draftOptions: [],
+    lastRound: null
   };
+
+  /** The trump deck you start an act with. Deepens via the draft. */
+  const BASE_LOADOUT = ['seersEye', 'charity', 'graveDebt', 'mirror'];
+  const MAX_COPIES = 3;
 
   let resolver = null;
 
@@ -491,9 +533,33 @@
 
   function grantTrump(side) {
     if (side.trumps.length >= MAX_TRUMPS) return;
-    const pool = side.isYou ? unlockedPool() : Object.keys(TRUMPS);
+
+    const pool = side.isYou
+      ? (S.loadout && S.loadout.length ? S.loadout : unlockedPool())
+      : Object.keys(TRUMPS);
+
     const id = pool[Math.floor(Math.random() * pool.length)];
     side.trumps.push(id);
+  }
+
+  /**
+   * Roll the three trump cards offered after a won duel.
+   * Pure + exported so the draft maths can be tested.
+   */
+  function rollDraft(loadout, pool, count) {
+    const owned = {};
+    for (const id of loadout) owned[id] = (owned[id] || 0) + 1;
+
+    let available = pool.filter((id) => (owned[id] || 0) < MAX_COPIES);
+    if (!available.length) available = pool.slice();
+
+    const bag = available.slice();
+    const picked = [];
+    while (picked.length < count && bag.length) {
+      const i = Math.floor(Math.random() * bag.length);
+      picked.push(bag.splice(i, 1)[0]);
+    }
+    return picked;
   }
 
   function playTrump(side, id) {
@@ -566,7 +632,8 @@
     S.rival = makeSide(opp.name, false, {
       maxVigil: START_VIGIL,
       startTrumps: opp.startTrumps,
-      cheat: opp.cheat
+      cheat: opp.cheat,
+      accuracy: opp.accuracy
     });
 
     grantTrump(S.you); grantTrump(S.you);
@@ -614,10 +681,70 @@
         vesselOf(S.vesselId).maxVigil,
         S.you.vigil + ACT_I.healAfterWin
       );
+
+      const drafted = await draftTrump();
+      if (drafted) {
+        S.loadout.push(drafted);
+        render();
+      }
+
       await betweenDuels();
     }
 
     await endAct(true);
+  }
+
+  /** Offer three trumps; the chosen one joins your deck for the rest of the act. */
+  function draftTrump() {
+    S.draftOptions = rollDraft(S.loadout, unlockedPool(), 3);
+    if (!S.draftOptions.length) return Promise.resolve(null);
+
+    return new Promise((resolve) => {
+      const screen = $('draftScreen');
+      const grid = $('draftGrid');
+      grid.innerHTML = '';
+
+      S.draftOptions.forEach((id) => {
+        const def = TRUMPS[id];
+        const owned = S.loadout.filter((x) => x === id).length;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'draft-option';
+        btn.dataset.rarity = def.rarity;
+
+        const rarity = document.createElement('span');
+        rarity.className = 'draft-rarity';
+
+        const name = document.createElement('span');
+        name.className = 'trump-name';
+        name.textContent = def.name;
+
+        const desc = document.createElement('span');
+        desc.className = 'trump-desc';
+        desc.textContent = def.desc;
+
+        const count = document.createElement('span');
+        count.className = 'draft-count';
+        count.textContent = 'Copies owned: ' + owned + ' / ' + MAX_COPIES;
+
+        btn.appendChild(rarity);
+        btn.appendChild(name);
+        btn.appendChild(desc);
+        btn.appendChild(count);
+
+        btn.addEventListener('click', () => {
+          screen.hidden = true;
+          sfx.chime();
+          haptic(30);
+          resolve(id);
+        });
+
+        grid.appendChild(btn);
+      });
+
+      screen.hidden = false;
+    });
   }
 
   function betweenDuels() {
@@ -650,10 +777,20 @@
     }
     render();
 
-    const body = won
+    let body = won
       ? 'You stand up from the last chair. Somewhere above, a door you have never seen unlocks itself.'
       : `The blade finds you on chair ${S.opponentIndex + 1} of ${ACT_I.opponents.length}. ` +
         'Somewhere above, something with your face reshuffles.';
+
+    if (!won && S.lastRound) {
+      const r = S.lastRound;
+      const left = S.deck.length;
+      body += ` The last hand: you had ${r.yt}, they had ${r.rt}, the target was ${r.target}.`;
+      body += r.youBust
+        ? ' You went over. The shoe still held what you needed.'
+        : ' You did not go far enough.';
+      body += ` ${left} card${left === 1 ? '' : 's'} were still in the shoe — that is where the answer was.`;
+    }
 
     showOverlay(
       won ? 'The Act Is Cleared' : 'The Blade Finds You',
@@ -791,7 +928,12 @@
     maybeAiTrump();
     await sleep(650);
 
-    if (shouldHit(S.rival)) {
+    // Even a perfect reader misplays sometimes. This is the difficulty dial:
+    // the Croupier blunders openly, the Dealer almost never does.
+    let decision = shouldHit(S.rival);
+    if (Math.random() > (S.rival.accuracy || 1)) decision = !decision;
+
+    if (decision) {
       const v = drawOne(S.rival);
       if (v !== null) say(`The rival draws a <em>${v}</em>.`);
       sfx.flick();
@@ -897,6 +1039,14 @@
     const rt = handTotal(S.rival);
     const winner = resolveWinner();
 
+    S.lastRound = {
+      yt: yt,
+      rt: rt,
+      target: S.target,
+      youBust: isBust(S.you),
+      rivalBust: isBust(S.rival)
+    };
+
     if (!winner) {
       say(`Both hands at <em>${yt}</em> and <em>${rt}</em>. The blade does not move.`);
       sfx.chime();
@@ -924,6 +1074,7 @@
         `<span class="bad">${nameOf(loser)} ${sverb(loser, 'loses', 'lose')} ${dmg} Vigil.</span>`);
     sfx.thump();
     shakeScreen();
+    haptic(winner === 'you' ? [0, 40] : [0, 60, 50, 120]);
     render();
     await sleep(1500);
   }
@@ -996,7 +1147,7 @@
       if (s > bestScore) { bestScore = s; bestId = id; }
     }
 
-    if (bestId && bestScore >= 5 && Math.random() < 0.85) {
+    if (bestId && bestScore >= 5 && Math.random() < 0.85 * (S.rival.accuracy || 1)) {
       const victim = S.you;
       const def = TRUMPS[bestId];
       if (def.hostile && victim.ward && !def.piercesWard) {
@@ -1281,6 +1432,12 @@
      Title screen / Vessel select
      --------------------------------------------------------- */
 
+  function applyMotionPreference() {
+    document.body.classList.toggle('reduce-motion', !!save.reduceMotion);
+    const btn = $('motionBtn');
+    if (btn) btn.textContent = 'Motion: ' + (save.reduceMotion ? 'Off' : 'On');
+  }
+
   function showTitle() {
     S.phase = 'title';
     stopTimer();
@@ -1354,6 +1511,8 @@
 
     S.you = makeSide('You', true, { maxVigil: v.maxVigil, vessel: S.vesselId });
     S.opponentIndex = 0;
+    S.loadout = BASE_LOADOUT.slice();
+    S.lastRound = null;
     S.message = '';
 
     save.seenIntro = true;
@@ -1410,6 +1569,22 @@
       mute.textContent = 'Sound: ' + (next ? 'On' : 'Off');
     });
 
+    // Respect the OS setting on a first run, then let the player override.
+    if (!save.seenIntro && window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      save.reduceMotion = true;
+    }
+    applyMotionPreference();
+
+    const motionBtn = $('motionBtn');
+    if (motionBtn) {
+      motionBtn.addEventListener('click', () => {
+        save.reduceMotion = !save.reduceMotion;
+        writeSave();
+        applyMotionPreference();
+      });
+    }
+
     document.addEventListener('keydown', (e) => {
       if (S.phase === 'wager' && ['1', '2', '3'].includes(e.key)) {
         resolveAction({ type: 'wager', value: Number(e.key) });
@@ -1440,6 +1615,9 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       computeWinner: computeWinner,
+      rollDraft: rollDraft,
+      MAX_COPIES: MAX_COPIES,
+      BASE_LOADOUT: BASE_LOADOUT,
       totalOf: function (cards) { return cards.reduce(function (a, c) { return a + c.v; }, 0); },
       TRUMPS: TRUMPS,
       VESSELS: VESSELS,
