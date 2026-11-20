@@ -34,6 +34,76 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   /* ---------------------------------------------------------
+     Vessels — playable characters. Every passive is visible to
+     the opponent before the deal, so the matchup is a read.
+     --------------------------------------------------------- */
+
+  const VESSELS = {
+    widow: {
+      name: 'The Widow',
+      epithet: 'She buried a husband and kept the debt.',
+      passive: 'Begins with six Vigil instead of five.',
+      unlockWins: 0,
+      maxVigil: 6
+    },
+    gravedigger: {
+      name: 'The Gravedigger',
+      epithet: 'He has dug every grave at this table.',
+      passive: 'Always sees the next card in the shoe.',
+      unlockWins: 2,
+      maxVigil: 5
+    },
+    confessor: {
+      name: 'The Confessor',
+      epithet: 'He has heard worse sins than yours.',
+      passive: 'Draws a second trump every round.',
+      unlockWins: 5,
+      maxVigil: 5
+    },
+    bride: {
+      name: 'The Hollow Bride',
+      epithet: 'Something else wore the ring.',
+      passive: 'Takes one less Vigil of damage each round.',
+      unlockWins: 8,
+      maxVigil: 5
+    }
+  };
+
+  const VESSEL_ORDER = ['widow', 'gravedigger', 'confessor', 'bride'];
+
+  /* ---------------------------------------------------------
+     Act I — a three-opponent gauntlet. Vigil carries over.
+     --------------------------------------------------------- */
+
+  const ACT_I = {
+    name: 'Act I — The Gauntlet',
+    healAfterWin: 2,
+    opponents: [
+      {
+        id: 'croupier',
+        name: 'The Pale Croupier',
+        line: 'Deals without looking at the cards.',
+        startTrumps: 2,
+        cheat: false
+      },
+      {
+        id: 'mourner',
+        name: 'The Mourner',
+        line: 'She bets what she has already lost.',
+        startTrumps: 3,
+        cheat: false
+      },
+      {
+        id: 'dealer',
+        name: 'The Veiled Dealer',
+        line: 'You have never seen its hands in the same place twice.',
+        startTrumps: 3,
+        cheat: true
+      }
+    ]
+  };
+
+  /* ---------------------------------------------------------
      1. Audio — procedural, no assets
      --------------------------------------------------------- */
 
@@ -128,10 +198,13 @@
       const raw = localStorage.getItem(SAVE_KEY);
       if (raw) {
         const p = JSON.parse(raw);
-        if (typeof p.wins === 'number' && typeof p.duels === 'number') return p;
+        if (typeof p.wins === 'number' && typeof p.duels === 'number') {
+          if (typeof p.candles !== 'number') p.candles = 0;
+          return p;
+        }
       }
     } catch (e) { /* private mode, corrupt data */ }
-    return { wins: 0, duels: 0, seenIntro: false };
+    return { wins: 0, duels: 0, candles: 0, seenIntro: false };
   }
 
   function writeSave() {
@@ -283,13 +356,15 @@
      4. State
      --------------------------------------------------------- */
 
-  function makeSide(label, isYou) {
+  function makeSide(label, isYou, opts) {
+    opts = opts || {};
+    const max = opts.maxVigil || START_VIGIL;
     return {
       label,
       isYou,
       cards: [],
-      vigil: START_VIGIL,
-      maxVigil: START_VIGIL,
+      vigil: max,
+      maxVigil: max,
       wager: 1,
       stood: false,
       trumps: [],
@@ -297,7 +372,11 @@
       reprieved: false,
       stakeBonus: 0,
       doubled: false,
-      revealed: false
+      revealed: false,
+      vessel: opts.vessel || null,
+      cheat: !!opts.cheat,
+      cheatUsed: false,
+      startTrumps: opts.startTrumps || 0
     };
   }
 
@@ -312,7 +391,9 @@
     message: '',
     timerId: null,
     timeLeft: TURN_SECONDS,
-    running: false
+    running: false,
+    vesselId: 'widow',
+    opponentIndex: 0
   };
 
   let resolver = null;
@@ -471,16 +552,30 @@
      7. Duel flow
      --------------------------------------------------------- */
 
+  function vesselOf(id) { return VESSELS[id] || VESSELS.widow; }
+
+  /** One duel against the current opponent. Resolves true if you survived. */
   async function runDuel() {
-    S.running = true;
+    const opp = ACT_I.opponents[S.opponentIndex];
+
     S.round = 0;
-    S.you = makeSide('You', true);
-    S.rival = makeSide('The Veiled Dealer', false);
+    S.you.cards = [];
+    S.you.trumps = [];
+    S.you.ward = false;
+
+    S.rival = makeSide(opp.name, false, {
+      maxVigil: START_VIGIL,
+      startTrumps: opp.startTrumps,
+      cheat: opp.cheat
+    });
 
     grantTrump(S.you); grantTrump(S.you);
     grantTrump(S.rival); grantTrump(S.rival);
+    for (let i = 2; i < opp.startTrumps; i++) grantTrump(S.rival);
 
+    say(`${opp.name}. ${opp.line}`);
     render();
+    await sleep(700);
 
     while (S.you.vigil > 0 && S.rival.vigil > 0) {
       await runRound();
@@ -488,7 +583,88 @@
       await sleep(400);
     }
 
-    await finishDuel();
+    return S.you.vigil > 0;
+  }
+
+  /** The whole Act. Vigil carries between opponents — that is the pressure. */
+  async function runGauntlet() {
+    S.running = true;
+    S.phase = 'play';
+
+    while (S.opponentIndex < ACT_I.opponents.length) {
+      const survived = await runDuel();
+
+      save.duels++;
+      if (!survived) {
+        writeSave();
+        await endAct(false);
+        return;
+      }
+
+      save.wins++;
+      save.candles += 10;
+      writeSave();
+      render();
+
+      S.opponentIndex++;
+      if (S.opponentIndex >= ACT_I.opponents.length) break;
+
+      // a moment to breathe
+      S.you.vigil = Math.min(
+        vesselOf(S.vesselId).maxVigil,
+        S.you.vigil + ACT_I.healAfterWin
+      );
+      await betweenDuels();
+    }
+
+    await endAct(true);
+  }
+
+  function betweenDuels() {
+    return new Promise((resolve) => {
+      const next = ACT_I.opponents[S.opponentIndex];
+      showOverlay(
+        'The Chair Turns',
+        `${next.name} sits down opposite you. ${next.line} You bind your wound and take up the next hand.`,
+        [{
+          label: 'Sit Down',
+          cls: 'primary',
+          onClick: () => { hideOverlay(); resolve(); }
+        }]
+      );
+    });
+  }
+
+  async function endAct(won) {
+    S.phase = 'over';
+    stopTimer();
+    sfx.stopDrone();
+
+    if (won) {
+      save.candles += 25;
+      writeSave();
+      sfx.chime();
+      setTimeout(() => sfx.chime(), 260);
+    } else {
+      sfx.sting();
+    }
+    render();
+
+    const body = won
+      ? 'You stand up from the last chair. Somewhere above, a door you have never seen unlocks itself.'
+      : `The blade finds you on chair ${S.opponentIndex + 1} of ${ACT_I.opponents.length}. ` +
+        'Somewhere above, something with your face reshuffles.';
+
+    showOverlay(
+      won ? 'The Act Is Cleared' : 'The Blade Finds You',
+      body,
+      [{
+        label: 'Return to the Crypt',
+        cls: 'primary',
+        onClick: () => { hideOverlay(); showTitle(); }
+      }],
+      won ? 'win' : 'lose'
+    );
   }
 
   async function runRound() {
@@ -510,6 +686,8 @@
 
     grantTrump(S.you);
     grantTrump(S.rival);
+    // The Confessor hears confessions: two trumps a round.
+    if (S.you.vessel === 'confessor') grantTrump(S.you);
 
     /* --- wager --- */
     S.phase = 'wager';
@@ -630,9 +808,81 @@
      8. Showdown
      --------------------------------------------------------- */
 
+  /**
+   * The whole ruleset, as a pure function. No state, no DOM — so it can be
+   * tested directly (see tests/rules.test.js).
+   *
+   * Returns 'you' | 'rival' | null (null = drawn round, no damage).
+   */
+  function computeWinner(youTotal, rivalTotal, target) {
+    const youBust = youTotal > target;
+    const rivalBust = rivalTotal > target;
+
+    // Both bust: the hand CLOSER to the target wins — the lower total.
+    if (youBust && rivalBust) {
+      if (youTotal === rivalTotal) return null;
+      return youTotal < rivalTotal ? 'you' : 'rival';
+    }
+    if (youBust) return 'rival';
+    if (rivalBust) return 'you';
+
+    if (youTotal === rivalTotal) return null;
+    return youTotal > rivalTotal ? 'you' : 'rival';
+  }
+
+  /** Who wins right now, given the hands as they stand. */
+  function resolveWinner() {
+    return computeWinner(handTotal(S.you), handTotal(S.rival), S.target);
+  }
+
+  /**
+   * The Veiled Dealer cheats — once per duel, and only when the round is
+   * already lost. It is the act's teaching moment: save a trump for the end.
+   */
+  async function playCheat() {
+    const r = S.rival;
+    r.cheatUsed = true;
+
+    say('The dealer\u2019s sleeve moves. The card you were watching was never the card.');
+    render();
+    sfx.sting();
+    await sleep(1100);
+
+    const base = r.cards.reduce((a, c) => a + c.v, 0);
+    let best = null;
+    for (const v of S.deck) {
+      if (base + v <= S.target && (best === null || v > best)) best = v;
+    }
+    if (best === null) {
+      say('The dealer reaches, finds nothing, and closes its hand.');
+      render();
+      await sleep(800);
+      return;
+    }
+
+    let idx = 0;
+    for (let i = 1; i < r.cards.length; i++) {
+      if (r.cards[i].v < r.cards[idx].v) idx = i;
+    }
+    const removed = r.cards[idx].v;
+    r.cards[idx] = { v: best, hidden: r.cards[idx].hidden };
+    S.deck.splice(S.deck.indexOf(best), 1);
+    S.deck.push(removed);
+
+    say('The dealer\u2019s hand is whole again. It was never going to lose that way.');
+    render();
+    sfx.thump();
+    await sleep(900);
+  }
+
   async function showdown() {
     S.phase = 'showdown';
     stopTimer();
+
+    if (S.rival.cheat && !S.rival.cheatUsed && resolveWinner() === 'you') {
+      await playCheat();
+    }
+
     S.you.revealed = true;
     S.rival.revealed = true;
     S.you.cards.forEach((c) => (c.hidden = false));
@@ -645,14 +895,7 @@
 
     const yt = handTotal(S.you);
     const rt = handTotal(S.rival);
-    const yb = isBust(S.you);
-    const rb = isBust(S.rival);
-
-    let winner = null;
-    if (yb && rb) winner = yt > rt ? 'you' : rt > yt ? 'rival' : null;
-    else if (yb) winner = 'rival';
-    else if (rb) winner = 'you';
-    else winner = yt > rt ? 'you' : rt > yt ? 'rival' : null;
+    const winner = resolveWinner();
 
     if (!winner) {
       say(`Both hands at <em>${yt}</em> and <em>${rt}</em>. The blade does not move.`);
@@ -669,38 +912,20 @@
     if (w.doubled) dmg *= 2;
     dmg = Math.max(1, dmg);
 
+    // The Hollow Bride wears the wound a little better than most.
+    if (loser === S.you && S.you.vessel === 'bride') dmg = Math.max(1, dmg - 1);
+
     loser.vigil = Math.max(0, loser.vigil - dmg);
 
+    const bothBust = isBust(S.you) && isBust(S.rival);
     const verb = winner === 'you' ? 'You take' : 'The rival takes';
-    say(`${verb} it, <em>${yt}</em> to <em>${rt}</em>. ` +
+    const context = bothBust ? 'Both bust \u2014 the closer hand takes it. ' : '';
+    say(`${context}${verb} it, <em>${yt}</em> to <em>${rt}</em>. ` +
         `<span class="bad">${nameOf(loser)} ${sverb(loser, 'loses', 'lose')} ${dmg} Vigil.</span>`);
     sfx.thump();
     shakeScreen();
     render();
     await sleep(1500);
-  }
-
-  async function finishDuel() {
-    S.phase = 'over';
-    const won = S.rival.vigil <= 0;
-
-    save.duels++;
-    if (won) save.wins++;
-    writeSave();
-    render();
-
-    sfx.stopDrone();
-    if (won) { sfx.chime(); setTimeout(() => sfx.chime(), 260); }
-    else { sfx.sting(); }
-
-    showOverlay(
-      won ? 'The Rival Falls' : 'The Blade Finds You',
-      won
-        ? 'The veil slips from the chair. Behind it there was only ever the shoe, and the cards, and you.'
-        : 'The chain goes slack. Somewhere above, something with your face reshuffles.',
-      [{ label: 'Duel Again', cls: 'primary', onClick: () => { hideOverlay(); resetAndStart(); } }],
-      won ? 'win' : 'lose'
-    );
   }
 
   /* ---------------------------------------------------------
@@ -795,6 +1020,14 @@
     const rank = rankFor(save.wins);
     $('rankName').textContent = rank.name;
     $('duelWins').textContent = save.wins;
+    if ($('candles')) $('candles').textContent = save.candles;
+
+    if ($('youName')) $('youName').textContent = vesselOf(S.vesselId).name;
+    if ($('rivalName')) $('rivalName').textContent = S.rival.label;
+    if ($('actProgress')) {
+      $('actProgress').textContent =
+        Math.min(S.opponentIndex + 1, ACT_I.opponents.length) + ' / ' + ACT_I.opponents.length;
+    }
 
     $('targetValue').textContent = S.target;
     $('targetValue').classList.toggle('deviated', S.target !== DEFAULT_TARGET);
@@ -884,6 +1117,13 @@
   }
 
   function renderShoe() {
+    const peek = $('peekNext');
+    if (peek) {
+      const canPeek = S.you.vessel === 'gravedigger' && S.deck.length > 0;
+      peek.hidden = !canPeek;
+      if (canPeek) peek.textContent = 'Next: ' + S.deck[0];
+    }
+
     const el = $('shoeCards');
     if (!el) return;
     el.innerHTML = '';
@@ -1037,12 +1277,91 @@
      12. Boot
      --------------------------------------------------------- */
 
-  function resetAndStart() {
+  /* ---------------------------------------------------------
+     Title screen / Vessel select
+     --------------------------------------------------------- */
+
+  function showTitle() {
+    S.phase = 'title';
     stopTimer();
     resolver = null;
     hideOverlay();
+    renderTitle();
+    $('titleScreen').hidden = false;
+  }
+
+  function hideTitle() { $('titleScreen').hidden = true; }
+
+  function renderTitle() {
+    const rankEl = $('titleRank');
+    if (rankEl) rankEl.textContent = rankFor(save.wins).name;
+    const candleEl = $('titleCandles');
+    if (candleEl) candleEl.textContent = save.candles;
+
+    const grid = $('vesselGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    VESSEL_ORDER.forEach((id) => {
+      const v = VESSELS[id];
+      const locked = save.wins < v.unlockWins;
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'vessel'
+        + (id === S.vesselId ? ' chosen' : '')
+        + (locked ? ' locked' : '');
+      el.disabled = locked;
+
+      const name = document.createElement('span');
+      name.className = 'vessel-name';
+      name.textContent = v.name;
+
+      const epi = document.createElement('span');
+      epi.className = 'vessel-epithet';
+      epi.textContent = v.epithet;
+
+      const pas = document.createElement('span');
+      pas.className = 'vessel-passive';
+      pas.textContent = v.passive;
+
+      el.appendChild(name);
+      el.appendChild(epi);
+      el.appendChild(pas);
+
+      if (locked) {
+        const lock = document.createElement('span');
+        lock.className = 'vessel-lock';
+        lock.textContent = 'Unlocks at ' + v.unlockWins + ' duels won';
+        el.appendChild(lock);
+      }
+
+      el.addEventListener('click', () => {
+        S.vesselId = id;
+        sfx.flick();
+        renderTitle();
+      });
+
+      grid.appendChild(el);
+    });
+  }
+
+  function startAct() {
+    const v = vesselOf(S.vesselId);
+    stopTimer();
+    resolver = null;
+    hideOverlay();
+    hideTitle();
+
+    S.you = makeSide('You', true, { maxVigil: v.maxVigil, vessel: S.vesselId });
+    S.opponentIndex = 0;
+    S.message = '';
+
+    save.seenIntro = true;
+    writeSave();
+
     sfx.startDrone();
-    runDuel();
+    render();
+    runGauntlet();
   }
 
   /* PWA: makes the browser build fully offline-installable.
@@ -1103,27 +1422,29 @@
     bindLifecycle();
     registerServiceWorker();
 
-    if (!save.seenIntro) {
-      showOverlay(
-        'You Are Seated',
-        'Eleven cards, one of each, numbered one to eleven. Two are dealt to each of you \u2014 the first turned face down. ' +
-        'Draw close to twenty-one, but never past it. Track what leaves the shoe; that is the only power you have. ' +
-        'Lose a round and the blade takes Vigil from you. Lose all five and the duel is over.',
-        [{
-          label: 'Begin the Duel',
-          cls: 'primary',
-          onClick: () => { save.seenIntro = true; writeSave(); resetAndStart(); }
-        }]
-      );
+    const enter = $('enterBtn');
+    if (enter) enter.addEventListener('click', startAct);
+
+    showTitle();
+  }
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
     } else {
-      resetAndStart();
+      boot();
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
+  // Node (test harness) hook — the browser ignores this entirely.
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      computeWinner: computeWinner,
+      totalOf: function (cards) { return cards.reduce(function (a, c) { return a + c.v; }, 0); },
+      TRUMPS: TRUMPS,
+      VESSELS: VESSELS,
+      ACT_I: ACT_I
+    };
   }
 
 })();

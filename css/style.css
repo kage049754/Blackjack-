@@ -669,3 +669,128 @@ body{
 
 /* prevent the whole body from scrolling on any device */
 body{ overflow: hidden; }
+
+/* ============================================================
+   TITLE SCREEN / VESSEL SELECT
+   ============================================================ */
+
+.title-overlay{
+  overflow-y: auto;
+  place-items: start center;
+  padding: 1.2rem .8rem;
+}
+
+.title-card{
+  max-width: 860px; width: 100%; margin: 0 auto;
+  padding: 2.1rem 1.7rem 2.4rem;
+  text-align: center;
+  border: 1px solid rgba(176,141,79,.28);
+  background: linear-gradient(170deg, rgba(22,14,13,.97), rgba(6,5,6,.99));
+  box-shadow: 0 30px 90px rgba(0,0,0,.9), inset 0 0 90px rgba(142,27,24,.07);
+  animation: rise .5s cubic-bezier(.2,.8,.3,1) both;
+}
+
+.title-emblem{
+  font-size: 1.9rem; color: var(--bone);
+  text-shadow: 0 0 28px rgba(232,176,99,.55);
+}
+
+.title-name{
+  font-family: var(--serif); font-size: 1.65rem; font-weight: 600;
+  letter-spacing: .26em; text-transform: uppercase;
+  margin-top: .55rem; color: var(--bone);
+}
+
+.title-tag{
+  font-family: var(--serif); font-size: .58rem; letter-spacing: .34em;
+  text-transform: uppercase; color: var(--bone-faint); margin-top: .5rem;
+}
+
+.title-blurb{
+  font-size: .95rem; line-height: 1.8; color: var(--bone-dim);
+  margin: 1.3rem auto 1.1rem; max-width: 46ch; font-style: italic;
+}
+
+.title-stats{
+  display: flex; gap: 1.8rem; justify-content: center; margin-bottom: 1.5rem;
+}
+
+.title-stats span{
+  font-family: var(--serif); font-size: .54rem; letter-spacing: .22em;
+  text-transform: uppercase; color: var(--bone-faint);
+}
+
+.title-stats b{
+  display: block; margin-top: .3rem; font-size: .85rem;
+  letter-spacing: .1em; color: var(--gold);
+}
+
+.pick-label{
+  font-family: var(--serif); font-size: .56rem; letter-spacing: .3em;
+  text-transform: uppercase; color: var(--bone-dim); margin-bottom: .85rem;
+}
+
+.vessel-grid{
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: .6rem; margin-bottom: 1.6rem;
+}
+
+.vessel{
+  display: flex; flex-direction: column; gap: .38rem; text-align: left;
+  padding: .9rem .75rem; min-height: 132px;
+  border: 1px solid rgba(176,141,79,.25);
+  background: linear-gradient(160deg, rgba(30,18,16,.92), rgba(9,7,7,.96));
+  color: var(--bone); cursor: pointer;
+  transition: border-color .22s, transform .22s, box-shadow .22s;
+  font-family: var(--body);
+}
+
+.vessel:hover:not(:disabled){ border-color: var(--gold); transform: translateY(-3px); }
+
+.vessel.chosen{
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px var(--amber), 0 0 28px rgba(232,176,99,.22);
+}
+
+.vessel.locked{ opacity: .34; cursor: not-allowed; }
+
+.vessel-name{
+  font-family: var(--serif); font-size: .64rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--bone);
+}
+
+.vessel-epithet{
+  font-size: .72rem; color: var(--bone-faint);
+  font-style: italic; line-height: 1.4;
+}
+
+.vessel-passive{
+  font-size: .78rem; color: var(--bone-dim);
+  line-height: 1.5; margin-top: auto;
+}
+
+.vessel-lock{
+  font-family: var(--serif); font-size: .48rem; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--blood-lit);
+}
+
+.enter-btn{ min-width: 250px; }
+
+.peek{
+  font-family: var(--serif); font-size: .55rem; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--amber);
+  text-shadow: 0 0 12px rgba(232,176,99,.5);
+}
+
+@media (max-width: 760px){
+  .vessel-grid{ grid-template-columns: repeat(2, 1fr); }
+  .title-name{ font-size: 1.25rem; letter-spacing: .18em; }
+  .title-card{ padding: 1.5rem 1.1rem 1.8rem; }
+  .title-blurb{ font-size: .86rem; }
+}
+
+@media (max-width: 430px){
+  .vessel-grid{ grid-template-columns: 1fr; }
+  .vessel{ min-height: 0; }
+  .title-stats{ gap: 1.1rem; }
+}

@@ -24,13 +24,16 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v1.0.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v1.0.0/TheLastHand-f73ddee18f1efb340eac8cc38145ca985cca327d.apk)**
+**[⬇ The Last Hand v1.1.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v1.1.0/TheLastHand-v1.1.0.apk)**
 
-- 5.1 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
-- SHA-256 `dfbe524f4509bd7e3c0350854571375e17db4178dff2fdad9061db8462c0a15f`
+- `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
+
+**v1.1.0 adds:** four playable **Vessels**, a three-opponent **Act I gauntlet**
+(Vigil carries between duels), a **boss that cheats**, candles and rank progression,
+and a title screen.
 
 All releases: <https://github.com/kage049754/Blackjack-/releases>
 
@@ -108,6 +111,7 @@ Total bundle: **~426 KB**.
 
 | Input | Action |
 |---|---|
+| Choose a **Vessel** on the title screen | Your character and passive |
 | Tap **Wager 1/2/3** (keys `1` `2` `3`) | Stake Vigil before the deal |
 | Tap **Draw** or `D` | Take a card |
 | Tap **Stand** or `S` | Lock your hand |
@@ -115,6 +119,22 @@ Total bundle: **~426 KB**.
 | **Sound** button | Toggle procedural audio (synthesised, no asset files) |
 
 Turns are 20 seconds. Time out and you're forced to stand.
+
+## Vessels
+
+| Vessel | Passive | Unlock |
+|---|---|---|
+| **The Widow** | Begins with **six** Vigil instead of five | start |
+| **The Gravedigger** | Always sees the **next card** in the shoe | 2 wins |
+| **The Confessor** | Draws a **second trump** every round | 5 wins |
+| **The Hollow Bride** | Takes **one less** Vigil of damage each round | 8 wins |
+
+## Act I — The Gauntlet
+
+Three opponents in sequence, and **your Vigil carries between them** — you only heal 2
+after a win. The Pale Croupier, then The Mourner, then **The Veiled Dealer**, who cheats
+exactly once per duel, and only when it is about to lose. That is the act's teaching
+moment: save a trump for the end.
 
 ## What's implemented
 
@@ -128,13 +148,18 @@ Turns are 20 seconds. Time out and you're forced to stand.
 - ✅ Progression — rank from duels won, trump pool unlocked by rank, saved to localStorage
 - ✅ Procedural audio — drone, heartbeat, card flick. Zero asset files.
 - ✅ Mobile hardening — safe-area insets, 44 px tap targets, no hover stick, no scroll
+- ✅ **4 Vessels** with passives, unlocked by progression
+- ✅ **Act I gauntlet** with a cheating boss and Vigil carried between duels
+- ✅ **28 automated tests** (`npm test`) — ruleset, both-bust rule, content integrity
 
 ## Not built yet
 
-- Real 1v1 multiplayer (needs an authoritative server)
-- Vessel/character system with passives
-- Acts, cheating boss, gauntlet mode
-- Real art and sound design
+See **`docs/ROADMAP.md`** for the full plan. In short:
+
+- Real 1v1 multiplayer (needs an authoritative server — Milestone 4)
+- Act II survival, endless gauntlet, trump deck-building
+- Real art and recorded sound
+- Release signing for the Play Store
 
 ## Project layout
 
@@ -147,8 +172,11 @@ sw.js                      offline service worker
 assets/fonts/              Cinzel + Cormorant Garamond (SIL OFL 1.1)
 assets/icons/              generated icons
 docs/GAME-DESIGN.md        full design document
+docs/ROADMAP.md            master roadmap: milestones, backlog, risks, timeline
+docs/REFERENCES.md         design references, code references, CC0 asset sources
 scripts/make_icons.py      regenerates every icon and splash screen
 scripts/build-www.js       assembles + verifies the offline bundle
+tests/rules.test.js        28 ruleset + content tests (npm test)
 capacitor.config.json      Capacitor config (appId com.lasthand.game)
 android/                   complete Android Studio / Gradle project
 .github/workflows/         cloud APK build
@@ -164,10 +192,20 @@ python3 scripts/make_icons.py    # icons + Android launcher + splash screens
 Everything is drawn procedurally from `scripts/make_icons.py` — there is no binary art
 committed that you can't reproduce.
 
-## Design
+## Docs
 
-See **`docs/GAME-DESIGN.md`** for the full design: pillars, ruleset, trump table,
-Vessel characters, art direction, engine rationale, and roadmap.
+| Document | What's in it |
+|---|---|
+| [`docs/GAME-DESIGN.md`](docs/GAME-DESIGN.md) | Pillars, ruleset, trump table, art direction, engine rationale |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Milestones M0–M6, dependency-ordered backlog, risks, timeline |
+| [`docs/REFERENCES.md`](docs/REFERENCES.md) | What we studied, what we may legally ship, CC0 asset sources |
+
+## Testing
+
+```bash
+npm test               # 28 ruleset + content assertions
+npm run verify         # tests + offline bundle check + Android resource check
+```
 
 ## IP
 

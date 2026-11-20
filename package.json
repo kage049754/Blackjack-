@@ -1,11 +1,15 @@
 {
   "name": "the-last-hand",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "A gothic survival duel of twenty-one. Offline-first card game.",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "serve": "python3 -m http.server 8000",
+    "test": "node tests/rules.test.js",
+    "verify:offline": "node scripts/build-www.js",
+    "verify:android": "python3 scripts/check-android-res.py",
+    "verify": "npm test && npm run verify:offline && npm run verify:android",
     "build:www": "node scripts/build-www.js",
     "sync": "npm run build:www && cap sync android",
     "apk:debug": "npm run sync && cd android && ./gradlew assembleDebug",
