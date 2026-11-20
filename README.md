@@ -24,12 +24,29 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.8.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.8.0/TheLastHand-v3.8.0.apk)**
+**[⬇ The Last Hand v3.9.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.9.0/TheLastHand-v3.9.0.apk)**
 
-- 9 250 991 bytes (8.9 MB) · `sha256 39154fea…9ec2` · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
+- 9 252 431 bytes (8.9 MB) · `sha256 5b0a5887…2d89` · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
+
+**v3.9.0 — the game proves itself before it ships.**
+
+`npm test` now runs the ruleset tests *and* a headless playthrough: the real game is
+booted in jsdom and plays ten duels with a randomised hand, asserting what a
+screenshot cannot show —
+
+- neither side's Vigil ever goes below zero or above its maximum;
+- **no card is ever in two places at once**: inside a round, the values in both hands
+  plus the shoe must be exactly 1..11, counted;
+- every duel reaches an ending, so the harness cannot hang on a dead button;
+- no uncaught page errors across the whole run.
+
+`npm run test:play` runs a hundred duels instead of ten. The harness is committed,
+not a scratch script: it was validated by deliberately breaking the shoe — removing
+one `splice` so a dealt card stayed in the deck — and confirming it fails with
+`value 6 appears 2 times`. A test that has never failed is a test you cannot trust.
 
 **v3.8.0 — twenty trumps, and eight new ways to cheat death.**
 

@@ -1,12 +1,12 @@
 {
   "name": "the-last-hand",
-  "version": "3.8.0",
+  "version": "3.9.0",
   "private": true,
   "description": "A gothic survival duel of twenty-one. Offline-first card game.",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "serve": "python3 -m http.server 8000",
-    "test": "node tests/rules.test.js",
+    "test": "node tests/rules.test.js && node tests/playthrough.test.js --duels 10",
     "verify:offline": "node scripts/build-www.js",
     "verify:android": "python3 scripts/check-android-res.py",
     "verify": "npm test && npm run verify:offline && npm run verify:android",
@@ -15,7 +15,9 @@
     "apk:debug": "npm run sync && cd android && ./gradlew assembleDebug",
     "apk:release": "npm run sync && cd android && ./gradlew assembleRelease",
     "render-score": "node scripts/render-score.js",
-    "balance": "node scripts/balance.js"
+    "balance": "node scripts/balance.js",
+    "test:rules": "node tests/rules.test.js",
+    "test:play": "node tests/playthrough.test.js --duels 100"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.10",
@@ -23,7 +25,8 @@
   },
   "devDependencies": {
     "@breezystack/lamejs": "^1.2.7",
-    "@capacitor/cli": "^7.6.10"
+    "@capacitor/cli": "^7.6.10",
+    "jsdom": "^31.0.1"
   },
   "engines": {
     "node": ">=18"

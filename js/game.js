@@ -2836,6 +2836,25 @@
   }
 
   // Node (test harness) hook — the browser ignores this entirely.
+  /* Read-only snapshot for the headless playthrough harness
+     (tests/playthrough.test.js). It cannot change anything: it exists so a
+     test can assert invariants the screen cannot show, like "no card is in
+     two places at once". */
+  if (typeof window !== 'undefined') {
+    window.__lastHandDebug = function () {
+      const vals = (side) => side.cards.map((c) => c.v);
+      return {
+        phase: S.phase,
+        round: S.round,
+        target: S.target,
+        deck: S.deck.slice(),
+        you: { cards: vals(S.you), vigil: S.you.vigil, maxVigil: S.you.maxVigil, trumps: S.you.trumps.slice() },
+        rival: { cards: vals(S.rival), vigil: S.rival.vigil, maxVigil: S.rival.maxVigil, trumps: S.rival.trumps.slice() },
+        tape: (S.tape || []).length
+      };
+    };
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       computeWinner: computeWinner,

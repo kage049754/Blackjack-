@@ -2,7 +2,7 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.8.0 — a full twenty-card trump set, replay of the duel you lost, boss voices, a defeat screen that teaches, two cheat kinds, cosmetics,
+**Status: v3.9.0 — a committed headless playthrough harness, a full twenty-card trump set, replay of the duel you lost, boss voices, a defeat screen that teaches, two cheat kinds, cosmetics,
 difficulty tuned from simulation data. Difficulty modes, the daily
 seeded run, colour-blind-safe damage cues, a cheat set-piece, candlelight that answers your Vigil, and a candle-priced
 cosmetics shop (card backs, table cloths). Three acts and nine opponents, an arcade mode, thirteen vector characters,
@@ -214,7 +214,7 @@ information; a client-side shoe is cheatable in an afternoon. The same pure
 ## 5. Quality gates
 
 **Definition of Done for any feature:**
-1. `npm test` passes (ruleset + content integrity)
+1. `npm test` passes (ruleset + content integrity + a 10-duel headless playthrough)
 2. `npm run build:www` passes the **offline check** (zero external references)
 3. Played on a real Android device, portrait *and* landscape
 4. No console errors across a full act
@@ -238,11 +238,12 @@ information; a client-side shoe is cheatable in an afternoon. The same pure
 | Content | Integrity tests (every trump usable, rarity valid) | ✅ |
 | Offline | Build-time URL scan + precache validation | ✅ |
 | Android res | `scripts/check-android-res.py` (keywords, duplicates) | ✅ |
-| Integration | Headless DOM playthrough (jsdom) | ad hoc — formalise in M2 |
+| Integration | Headless DOM playthrough (`tests/playthrough.test.js`, jsdom) | ✅ **v3.9** — 10 duels in `npm test`, 100 via `npm run test:play`; asserts Vigil bounds, the 1..11 card accounting inside a round, terminal states and zero page errors. Self-tested by breaking the shoe on purpose. |
 | Device | Manual matrix, 5 Android versions | M5 |
 
-**Add in M2:** a headless playthrough harness committed to the repo that runs 100 random
-duels and asserts no crash, no negative Vigil, no card duplication.
+**Delivered in v3.9:** `tests/playthrough.test.js` — a committed headless harness (see the row
+above). Played 25 duels / 101 rounds / 64 trumps in 35 s locally with no violations, and it
+was shown to fail correctly on an injected card-duplication bug.
 
 ---
 
