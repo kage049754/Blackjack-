@@ -306,6 +306,28 @@ other milestone combined.
 
 ---
 
+## 10a. What is left, and what would unblock it
+
+Everything that can be finished on this machine is finished. What remains needs
+something the repository cannot supply, and each item names its evidence.
+
+| Item | State | Blocker | What would unblock it |
+|---|---|---|---|
+| P0-1 release signing (**M5**) | workflow is debug-signed by design | no keystore | a base64 keystore + passwords stored as repo secrets; the workflow already has the branch for it |
+| P0-5 pause/resume on Android | unverified | no device or emulator | one device run: background mid-duel, resume, confirm the hand and the clock are sane |
+| P0-6 crash-free session audit | unverified | no device matrix | five Android versions, one act each, watch logcat |
+| **M4** real-time PvP | not started | no server | an authoritative Node + WebSocket host; the client protocol and the 20 s clock are designed in §4 |
+| P2-14 online leaderboard | local best run only | no server | any backend + a privacy decision; see §7 for the stance on telemetry |
+| **M6** live seasons | not started | M4 | — |
+| M3 "5-challenger Act II" | shipped as 3 chairs per act, 9 opponents total | design call, not a blocker | the current shape (3 acts × 3) tests better than five in one act; revisit with real players |
+| M2 human "tense" gate | unmet | needs testers | ten people, one act each, one question: did you want one more hand |
+
+The machine-checkable surface — rules, content integrity, offline build, Android
+resources, the headless playthrough, the balance model — all run in CI on every
+push, so any of the above can be picked up without re-verifying the foundation.
+
+---
+
 ## 11. Immediate next three tasks
 
 Shipped in v1.2: damage haptics, reduced motion, the loss screen that teaches, save
