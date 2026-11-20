@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Last Hand palette -->
+    <color name="ink">#FF07070A</color>
+    <color name="felt">#FF12100F</color>
+    <color name="bone">#FFE6DCC9</color>
+    <color name="blood">#FF8E1B18</color>
+    <color name="gold">#FFB08D4F</color>
+    <color name="amber">#FFE8B063</color>
+
+    <color name="colorPrimary">#FF07070A</color>
+    <color name="colorPrimaryDark">#FF000000</color>
+    <color name="colorAccent">#FFB08D4F</color>
+</resources>

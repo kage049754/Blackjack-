@@ -1,0 +1,129 @@
+name: Build Android APK
+
+# Builds a real, installable APK in the cloud — no Android Studio needed.
+#
+#   • every push / PR   → APK available as a downloadable artifact
+#   • pushing a tag v*  → also published as a GitHub Release asset
+#
+# The game is fully offline, so the APK needs no network at runtime.
+
+on:
+  push:
+    branches:
+      - main
+      - 'arena/**'
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: Assemble debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ruleset tests
+        run: npm test
+
+      - name: Build web bundle (offline check enforced)
+        run: npm run build:www
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Validate Android resources
+        run: python3 scripts/check-android-res.py
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: |
+          set +e
+          ./gradlew assembleDebug --no-daemon --stacktrace > "$RUNNER_TEMP/gradle.log" 2>&1
+          STATUS=$?
+          cat "$RUNNER_TEMP/gradle.log"
+          if [ "$STATUS" -ne 0 ]; then
+            python3 ../scripts/annotate-file.py "$RUNNER_TEMP/gradle.log" error "Gradle failure"
+            exit "$STATUS"
+          fi
+
+      - name: Locate APK
+        id: find_apk
+        run: |
+          APK=$(find android/app/build/outputs/apk/debug -name '*.apk' | head -n 1)
+          if [ -z "$APK" ]; then
+            echo "::error::No APK produced"
+            exit 1
+          fi
+          echo "apk=$APK" >> "$GITHUB_OUTPUT"
+          ls -lh "$APK"
+          unzip -l "$APK" | head -n 15
+
+      - name: Verify APK contents
+        run: |
+          APK="${{ steps.find_apk.outputs.apk }}"
+          {
+            echo "file: $(basename "$APK")"
+            echo "size: $(stat -c%s "$APK") bytes ($(numfmt --to=iec "$(stat -c%s "$APK")"))"
+            echo "sha256: $(sha256sum "$APK" | cut -d' ' -f1)"
+            echo ""
+            echo "--- manifest / code ---"
+            unzip -l "$APK" | awk '{print $4}' | grep -E '^(AndroidManifest\.xml|classes[0-9]*\.dex|resources\.arsc)$' | sort
+            echo ""
+            echo "--- bundled game (assets/public) ---"
+            unzip -l "$APK" | awk '{print $4}' | grep -E '^assets/public/' | sort
+          } | tee "$RUNNER_TEMP/apk-report.txt"
+          python3 scripts/annotate-file.py "$RUNNER_TEMP/apk-report.txt" notice "APK verified"
+
+      - name: Rename APK
+        run: |
+          mkdir -p dist
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            NAME="${GITHUB_REF_NAME}"
+          else
+            NAME="$(git rev-parse --short HEAD)"
+          fi
+          cp "${{ steps.find_apk.outputs.apk }}" "dist/TheLastHand-${NAME}.apk"
+          ls -lh dist/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: the-last-hand-apk
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk
+          generate_release_notes: true
