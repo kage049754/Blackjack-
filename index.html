@@ -31,6 +31,7 @@
 <div class="vignette"></div>
 <div class="grain"></div>
 <div class="blood-flash" id="bloodFlash" aria-hidden="true"></div>
+<div class="cheat-veil" id="cheatVeil" aria-hidden="true"></div>
 
 <header class="topbar">
   <div class="brand">
@@ -137,14 +138,23 @@
       <span>Rank <b id="titleRank">Aspirant</b></span>
       <span>Candles <b id="titleCandles">0</b></span>
       <span>Best run <b id="titleBest">0</b></span>
+      <span>Today's daily <b id="titleDaily">—</b></span>
     </div>
     <h3 class="pick-label">Choose your Vessel</h3>
     <div class="vessel-grid" id="vesselGrid"></div>
     <div class="title-modes">
       <button class="btn primary enter-btn" id="enterBtn" type="button">The Descent</button>
       <button class="btn arcade-btn" id="arcadeBtn" type="button">Arcade</button>
+      <button class="btn daily-btn" id="dailyBtn" type="button">Daily Run</button>
     </div>
-    <p class="title-hint">The Descent: three acts, no continues. Arcade: one hand after another, until you lose one.</p>
+
+    <div class="difficulty-row" id="difficultyRow" role="group" aria-label="Difficulty">
+      <button class="diff" type="button" data-diff="casual">Casual</button>
+      <button class="diff" type="button" data-diff="standard">Standard</button>
+      <button class="diff" type="button" data-diff="nightmare">Nightmare</button>
+    </div>
+
+    <p class="title-hint" id="titleHint">The Descent: three acts, no continues. Arcade: one hand after another. Daily: the same shoe for everyone, today only.</p>
   </div>
 </div>
 

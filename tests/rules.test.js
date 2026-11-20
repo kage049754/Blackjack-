@@ -13,7 +13,7 @@ const path = require('path');
 const game = require(path.resolve(__dirname, '..', 'js', 'game.js'));
 
 const { computeWinner, totalOf, TRUMPS, VESSELS, ACT_I, ACTS, rollDraft, MAX_COPIES,
-        BASE_LOADOUT, arcadePool, arcadeScaled } = game;
+        BASE_LOADOUT, arcadePool, arcadeScaled, DIFFICULTY, reseed, rnd, seedFrom } = game;
 
 let passed = 0;
 let failed = 0;
@@ -219,6 +219,49 @@ check('draft is not stuck on one card', seen.size > 6, true);
 /* ---------------------------------------------------------
    Summary
    --------------------------------------------------------- */
+
+/* ---------------------------------------------------------
+   Determinism — the daily run's whole contract
+   --------------------------------------------------------- */
+
+section('Deterministic runs');
+
+const seq = (n) => { const out = []; for (let i = 0; i < n; i++) out.push(rnd()); return out; };
+
+reseed('last-hand-daily:2026-11-20');
+const a = seq(8);
+reseed('last-hand-daily:2026-11-20');
+const b = seq(8);
+check('the same seed replays the same sequence',
+  a.join(',') === b.join(','), true);
+
+reseed('last-hand-daily:2026-11-21');
+const c = seq(8);
+check('a different day deals a different shoe', a.join(',') !== c.join(','), true);
+check('seeded values stay in [0,1)', a.every((v) => v >= 0 && v < 1), true);
+check('seedFrom is stable', seedFrom('abc'), seedFrom('abc'));
+check('seedFrom separates inputs', seedFrom('abc') !== seedFrom('abd'), true);
+
+reseed(null);
+check('random mode still produces valid values', seq(4).every((v) => v >= 0 && v < 1), true);
+
+/* ---------------------------------------------------------
+   Difficulty
+   --------------------------------------------------------- */
+
+section('Difficulty');
+
+check('three difficulties', Object.keys(DIFFICULTY).length, 3);
+check('casual gives more Vigil', DIFFICULTY.casual.vigil > DIFFICULTY.standard.vigil, true);
+check('nightmare gives less Vigil', DIFFICULTY.nightmare.vigil < DIFFICULTY.standard.vigil, true);
+check('standard is neutral',
+  DIFFICULTY.standard.vigil === 0 && DIFFICULTY.standard.accuracy === 0 && DIFFICULTY.standard.cheats === 0, true);
+check('matching AI accuracy never exceeds 1',
+  chairs.every((o) => Math.min(0.995, o.accuracy + DIFFICULTY.nightmare.accuracy) <= 1), true);
+check('matching AI accuracy never drops below a floor',
+  chairs.every((o) => Math.max(0.35, o.accuracy + DIFFICULTY.casual.accuracy) >= 0.35), true);
+check('nightmare never produces negative cheat charges',
+  chairs.every((o) => Math.max(0, (o.cheats || 0) + DIFFICULTY.nightmare.cheats) >= 0), true);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

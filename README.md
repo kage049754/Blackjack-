@@ -24,15 +24,29 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.1.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.1.0/TheLastHand-v3.1.0.apk)**
+**[⬇ The Last Hand v3.2.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.2.0/TheLastHand-v3.2.0.apk)**
 
 - 8.9 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
-- **SHA-256** `5475aaf35b15bc6a7b6f7da213500279d4d8f3677275ce362986822b3eaeeac6`
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
 
-**v3.1.0 adds a recorded score and a 3D character stage.**
+**v3.2.0 finishes the feel pass and adds the modes.**
+
+- **Difficulty** — Casual / Standard / Nightmare. Vigil, AI accuracy and cheat
+  charges all move; the rules never do, so skill transfers.
+- **Daily Run** — a seeded, deterministic shoe. Everyone who sits down today plays
+  the same cards. No server: the date is the seed. Today's best streak is shown on
+  the title screen.
+- **The cheat is now a moment.** When the Veiled Dealer (or the Thing) plays dirty,
+  the room desaturates and blurs, the score drops to a whisper, a veil covers the
+  table, and the phone holds a haptic. It reads as a betrayal, not a rule.
+- **Candlelight answers your Vigil.** Lose Vigil and the candles dim; at death the
+  room is nearly dark.
+- **Damage cues no longer rely on colour** — a numeral badge with a hatch pattern,
+  and `BUST` / `EXACT` spelled out under the hand.
+
+**v3.1.0 added a recorded score and a 3D character stage.**
 
 - **The score is now baked, not synthesised live.** `scripts/render-score.js`
   composes and renders three loops offline — bowed strings, a formant choir, pipe

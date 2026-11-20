@@ -1147,3 +1147,96 @@ body.reduce-motion .blood-flash.hit{ animation: none !important; opacity: .35; }
 .portrait:has(.portrait-canvas){
   background: #06060a;
 }
+
+/* ============================================================
+   M2 — the room answers you
+   ============================================================ */
+
+/* --vigil is written by render(): 1 when whole, 0 at death */
+.candlelight{ opacity: calc(0.30 + var(--vigil, 1) * 0.70); transition: opacity 1.2s ease; }
+.crypt-candles i{ opacity: calc(0.25 + var(--vigil, 1) * 0.75); transition: opacity 1.2s ease; }
+.crypt-arch{ opacity: calc(0.45 + var(--vigil, 1) * 0.55); transition: opacity 1.2s ease; }
+
+/* the cheat: the room stops, desaturates, and leans in */
+body.cheat-slow .table{
+  filter: saturate(.18) brightness(.72) blur(1.2px);
+  transform: scale(1.015);
+  transition: filter 1.5s ease, transform 1.5s ease;
+}
+body.cheat-slow .candlelight{ animation-duration: 14s; }
+.cheat-veil{
+  position: fixed; inset: 0; z-index: 31; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(60% 50% at 50% 45%, rgba(142,27,24,.20), transparent 72%),
+    radial-gradient(120% 90% at 50% 50%, transparent 40%, rgba(0,0,0,.72) 100%);
+  transition: opacity .55s ease;
+}
+.cheat-veil.show{ opacity: 1; }
+
+/* ============================================================
+   Accessibility — damage and bust never rely on hue alone
+   ============================================================ */
+
+.dmg-badge{
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  padding: .35rem .8rem;
+  font-family: var(--serif); font-size: 1rem; letter-spacing: .12em;
+  text-transform: uppercase; color: #fff;
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,.42) 0 4px, transparent 4px 8px),
+    linear-gradient(180deg, #a5201a, #6d1411);
+  border: 1px solid rgba(255,255,255,.45);
+  border-radius: 3px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.7);
+  animation: dmgPop 1.5s ease-out both;
+  pointer-events: none; z-index: 12;
+  white-space: nowrap;
+}
+@keyframes dmgPop{
+  0%  { opacity: 0; transform: translate(-50%, -50%) scale(.8); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  70% { opacity: 1; }
+  100%{ opacity: 0; transform: translate(-50%, -70%) scale(1); }
+}
+
+.score[data-state="bust"]::after{
+  content: 'BUST';
+  display: block;
+  font-family: var(--serif); font-size: .52rem; letter-spacing: .18em;
+  color: var(--blood-lit); margin-top: .1rem;
+}
+.score[data-state="exact"]::after{
+  content: 'EXACT';
+  display: block;
+  font-family: var(--serif); font-size: .52rem; letter-spacing: .18em;
+  color: var(--amber); margin-top: .1rem;
+}
+
+/* ============================================================
+   Difficulty + daily
+   ============================================================ */
+
+.difficulty-row{
+  display: flex; gap: .45rem; justify-content: center; margin-top: .8rem;
+}
+.diff{
+  font-family: var(--serif); font-size: .62rem; letter-spacing: .16em;
+  text-transform: uppercase; padding: .38rem .8rem; cursor: pointer;
+  color: var(--bone-faint); background: transparent;
+  border: 1px solid rgba(176,141,79,.28); border-radius: 2px;
+  transition: color .25s, border-color .25s, background .25s;
+}
+.diff:hover{ color: var(--bone); border-color: rgba(176,141,79,.6); }
+.diff.on{
+  color: var(--amber); border-color: var(--gold);
+  background: rgba(232,176,99,.10);
+  box-shadow: 0 0 16px rgba(232,176,99,.18);
+}
+
+.daily-btn{ border-color: rgba(124,139,149,.45); color: var(--cold); }
+.daily-btn:hover{ background: rgba(124,139,149,.10); box-shadow: 0 0 22px rgba(124,139,149,.22); }
+
+body.reduce-motion .dmg-badge{ animation: none !important; opacity: 1; }
+body.reduce-motion body.cheat-slow .table,
+body.reduce-motion.cheat-slow .table{ filter: saturate(.4) brightness(.8); transform: none; }

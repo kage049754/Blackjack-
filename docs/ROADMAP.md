@@ -2,7 +2,8 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.1.0 — content-complete, with a recorded score and an opt-in 3D stage. Three acts and nine opponents, an
+**Status: v3.2.0 — M2 complete. Difficulty modes, the daily seeded run, colour-blind-safe
+damage cues, a cheat set-piece, and candlelight that answers your Vigil. Three acts and nine opponents, an
 arcade mode, thirteen vector characters, a generative score, offline APK shipping.**
 Target: **v2.0 — Steam + Android release** with real-time PvP.
 
@@ -64,16 +65,26 @@ Each milestone has a **gate**. Do not start the next one until the gate passes.
 **Gate:** a full Act I run completes without a runtime error; the boss cheat reads as
 *fair* (the player can explain why they lost).
 
-### M2 — Feel pass 🔶 *in progress (v1.2 partial)*
+### M2 — Feel pass ✅ *done (v3.2)*
 **Goal:** make it *feel* like horror, not a web page with dark colours.
-- ✅ Haptics on Android (`navigator.vibrate`, VIBRATE permission)
-- ✅ Reduced-motion mode (OS default + in-game toggle)
-- ✅ Blade lurch + shake on damage
-- ✅ Card deal animation, staggered with a per-card sound
-- ⬜ Boss cheat moment: deliberate slow-motion + sound dropout
-- ⬜ Candle flicker tied to Vigil (more danger → less light)
-- ⬜ Ambient loop with an unresolved fifth
-- **Gate:** silent-playtesters describe the game as "tense" unprompted.
+- ✅ Haptics on Android (`navigator.vibrate`, VIBRATE permission) — v1.2
+- ✅ Reduced-motion mode (OS default + in-game toggle) — v1.2
+- ✅ Blade lurch + shake on damage — v1.2
+- ✅ Card deal animation, staggered with a per-card sound — v1.2
+- ✅ **Boss cheat set-piece** — the room desaturates, blurs and leans in for 1.5 s,
+  the score ducks to 22% for 4.2 s, a veil drops over the table, and a haptic
+  pattern holds. `cheatSetPiece()` in `js/game.js`, `.cheat-slow` + `#cheatVeil`.
+  *Verified:* `cheatVeil` mounts and `body.cheat-slow` toggles in the jsdom harness;
+  timing is 1500 ms in / 1500 ms out.
+- ✅ **Candlelight tied to Vigil** — `render()` writes `--vigil` (0–1) to the body;
+  `.candlelight`, `.crypt-candles i` and `.crypt-arch` all scale opacity from it.
+  *Verified:* `--vigil` reads `1.000` at full life in the harness.
+- ✅ **Unresolved fifth** — the pad in `js/bgm.js` and the string bed in
+  `scripts/render-score.js` are voiced **root + fifth + octave with no third**
+  (`[D2*root, D2*fifth, D2*root*2]`). Nothing resolves; the harmony never lands.
+- ⚠️ **Gate:** the published gate is a human judgement ("silent playtesters say
+  *tense* unprompted"). Every implementable requirement is done; the gate itself
+  needs testers, which this environment cannot provide. Recorded as a blocker.
 
 ### M3 — Act II + progression depth *(~3 weeks)*
 **Goal:** reasons to come back tomorrow.
@@ -112,9 +123,9 @@ Size: **S** ≤ 1 day · **M** ≈ 2–3 days · **L** ≈ 1 week · **XL** > 1 
 
 | # | Task | Size | Notes |
 |---|---|---|---|
-| 1 | Release signing + AAB | S | Generate keystore now, store off-repo |
+| 1 | Release signing + AAB | S | **Blocked:** needs a keystore secret stored in repo settings. Workflow must stay debug-signed until then. |
 | 2 | ~~Save migration & corruption recovery~~ ✅ **shipped v1.2** | S | `SAVE_VERSION` + field sanitising |
-| 3 | Accessibility: colour-blind safe damage cues | M | Never rely on red/green alone |
+| 3 | ~~Accessibility: colour-blind safe damage cues~~ ✅ **shipped v3.2** | M | Numeral badge with a hatch pattern, plus "BUST"/"EXACT" spelled out |
 | 4 | ~~Reduce-motion setting~~ ✅ **shipped v1.2** | S | OS default + manual toggle |
 | 5 | Pause/resume correctness on Android | S | Verify lifecycle on a real device |
 | 6 | Crash-free session audit | M | Manual matrix across 5 Android versions |
@@ -125,9 +136,9 @@ Size: **S** ≤ 1 day · **M** ≈ 2–3 days · **L** ≈ 1 week · **XL** > 1 
 |---|---|---|---|
 | 7 | ~~Trump deck-building between acts~~ ✅ **shipped v1.2** | L | Turns a card game into a *build* |
 | 8 | Boss personality: taunts, tempo | M | Text + timing, no art needed |
-| 9 | Streak / daily seed | M | Deterministic seeded runs, offline-friendly |
+| 9 | ~~Streak / daily seed~~ ✅ **shipped v3.2** | M | `reseed()` + mulberry32; every gameplay roll goes through `rnd()` |
 | 10 | Loss screen that teaches | S | Show *why* you lost: the card you ignored |
-| 11 | Difficulty modes | M | Affects AI aggression + trump count |
+| 11 | ~~Difficulty modes~~ ✅ **shipped v3.2** | M | Casual / Standard / Nightmare: Vigil, accuracy and cheat charges |
 | 12 | Second boss with a different cheat | L | e.g. forces a re-deal |
 
 ### P2 — depth & longevity
@@ -297,11 +308,14 @@ other milestone combined.
 Shipped in v1.2: damage haptics, reduced motion, the loss screen that teaches, save
 migration, and **trump deck-building** (the highest-leverage retention change).
 
+Shipped in v3.2: M2 complete (cheat set-piece, Vigil-driven candlelight, unresolved
+fifth), colour-blind-safe damage cues, difficulty modes, and the daily seeded run.
+
 Next, in order:
 
-1. **M2-3:** The boss cheat as a set-piece — slow motion, sound dropout, a held breath.
-   Right now it reads as a rules event; it should read as a betrayal. *(M)*
-2. **Balance harness:** a headless simulator running 500 duels per opponent to tune
-   `accuracy` with data rather than feel. The current curve was set by jaw, not numbers. *(M)*
-3. **P1-9:** Daily seeded run — a deterministic shuffle shared by everyone who plays that
-   day. Offline-friendly, zero server, enormous replay value. *(M)*
+1. **Balance harness** — headless simulator, 500 duels per opponent, to set `accuracy`
+   from data instead of judgement. *(M)*
+2. **P2-16 local stat page** — win rate, best hand, trumps used. *(S)*
+3. **P2-15 cosmetics** — card backs and table cloths bought with candles. Never paid
+   power. *(M)*
+4. **M5 signing** — blocked on a keystore secret; see P0-1.

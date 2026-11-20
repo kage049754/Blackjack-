@@ -33,6 +33,33 @@
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  /* ---------------------------------------------------------
+     Deterministic RNG. Daily runs must deal the same shoe to
+     everyone, so every gameplay decision goes through rnd().
+     --------------------------------------------------------- */
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  let rng = Math.random;
+
+  function seedFrom(text) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < text.length; i++) {
+      h ^= text.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function rnd() { return rng(); }
+  function reseed(text) { rng = text ? mulberry32(seedFrom(text)) : Math.random; }
+
   /** Short haptic pulse where the platform supports it; silent no-op elsewhere. */
   function haptic(pattern) {
     try {
@@ -77,6 +104,21 @@
   };
 
   const VESSEL_ORDER = ['widow', 'gravedigger', 'confessor', 'bride'];
+
+  /* Difficulty changes how much Vigil you have and how well they play.
+     It never changes the rules, so the skill you build always transfers. */
+  const DIFFICULTY = {
+    casual:    { label: 'Casual',    vigil: 2,  accuracy: -0.12, cheats: -1,
+                 note: 'Two more Vigil. They misplay far more.' },
+    standard:  { label: 'Standard',  vigil: 0,  accuracy: 0,     cheats: 0,
+                 note: 'The intended table.' },
+    nightmare: { label: 'Nightmare', vigil: -2, accuracy: 0.03,  cheats: 1,
+                 note: 'Two fewer Vigil. Everyone cheats more.' }
+  };
+
+  function difficulty() {
+    return DIFFICULTY[save.difficulty] || DIFFICULTY.standard;
+  }
 
   /* ---------------------------------------------------------
      Act I — a three-opponent gauntlet. Vigil carries over.
@@ -306,7 +348,8 @@
   function blankSave() {
     return { version: SAVE_VERSION, wins: 0, duels: 0, candles: 0,
              seenIntro: false, reduceMotion: false, musicOn: true,
-             art3d: false, act: 0, cleared: false, bestArcade: 0 };
+             art3d: false, act: 0, cleared: false, bestArcade: 0,
+             difficulty: 'standard', dailyBest: { date: '', streak: 0 } };
   }
 
   /** Non-negative integer, or the fallback. Guards against corrupt saves. */
@@ -331,6 +374,12 @@
           out.reduceMotion = !!p.reduceMotion;
           out.musicOn = p.musicOn === undefined ? true : !!p.musicOn;
           out.art3d = !!p.art3d;
+          out.difficulty = DIFFICULTY[p.difficulty] ? p.difficulty : 'standard';
+          out.dailyBest = {
+            date: typeof p.dailyBest === 'object' && p.dailyBest && typeof p.dailyBest.date === 'string'
+              ? p.dailyBest.date.slice(0, 10) : '',
+            streak: safeInt(p.dailyBest && p.dailyBest.streak, 0, 1e6)
+          };
           out.act = safeInt(p.act, 0, ACTS.length - 1);
           out.cleared = !!p.cleared;
           out.bestArcade = safeInt(p.bestArcade, 0, 1e6);
@@ -563,7 +612,7 @@
     const d = [];
     for (let v = 1; v <= 11; v++) d.push(v);
     for (let i = d.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rnd() * (i + 1));
       const t = d[i]; d[i] = d[j]; d[j] = t;
     }
     return d;
@@ -642,7 +691,7 @@
       ? (S.loadout && S.loadout.length ? S.loadout : unlockedPool())
       : Object.keys(TRUMPS);
 
-    const id = pool[Math.floor(Math.random() * pool.length)];
+    const id = pool[Math.floor(rnd() * pool.length)];
     side.trumps.push(id);
   }
 
@@ -660,7 +709,7 @@
     const bag = available.slice();
     const picked = [];
     while (picked.length < count && bag.length) {
-      const i = Math.floor(Math.random() * bag.length);
+      const i = Math.floor(rnd() * bag.length);
       picked.push(bag.splice(i, 1)[0]);
     }
     return picked;
@@ -736,8 +785,8 @@
     S.rival = makeSide(opp.name, false, {
       maxVigil: opp.vigil || START_VIGIL,
       startTrumps: opp.startTrumps,
-      cheats: opp.cheats || 0,
-      accuracy: opp.accuracy
+      cheats: Math.max(0, (opp.cheats || 0) + difficulty().cheats),
+      accuracy: Math.max(0.35, Math.min(0.995, (opp.accuracy || 0.8) + difficulty().accuracy))
     });
 
     grantTrump(S.you); grantTrump(S.you);
@@ -1005,8 +1054,8 @@
     if (S.you.vessel === 'confessor') grantTrump(S.you);
 
     // Some things eat what you are carrying.
-    if (opp.drain && S.you.trumps.length && Math.random() < opp.drain) {
-      const idx = Math.floor(Math.random() * S.you.trumps.length);
+    if (opp.drain && S.you.trumps.length && rnd() < opp.drain) {
+      const idx = Math.floor(rnd() * S.you.trumps.length);
       const eaten = S.you.trumps.splice(idx, 1)[0];
       say(`${opp.name} takes the <em>${TRUMPS[eaten].name}</em> out of your hand and swallows it.`);
       sfx.wrong();
@@ -1127,7 +1176,7 @@
     // Even a perfect reader misplays sometimes. This is the difficulty dial:
     // the Croupier blunders openly, the Dealer almost never does.
     let decision = shouldHit(S.rival);
-    if (Math.random() > (S.rival.accuracy || 1)) decision = !decision;
+    if (rnd() > (S.rival.accuracy || 1)) decision = !decision;
 
     if (decision) {
       const v = drawOne(S.rival);
@@ -1177,7 +1226,22 @@
    * The Veiled Dealer cheats — once per duel, and only when the round is
    * already lost. It is the act's teaching moment: save a trump for the end.
    */
+  /* Slow motion, the sound pulled out of the room, and a held breath.
+     The rules were always going to bend; this is about the moment. */
+  async function cheatSetPiece() {
+    const veil = $('cheatVeil');
+    document.body.classList.add('cheat-slow');
+    if (veil) veil.classList.add('show');
+    if (window.BGM) { BGM.duck(4200); }
+    sfx.whisper();
+    haptic([0, 70, 50, 180]);
+    await sleep(1500);
+    document.body.classList.remove('cheat-slow');
+    if (veil) veil.classList.remove('show');
+  }
+
   async function playCheat() {
+    await cheatSetPiece();
     const r = S.rival;
     r.cheatUsed = true;
     r.cheatsLeft = Math.max(0, r.cheatsLeft - 1);
@@ -1273,6 +1337,7 @@
     say(`${context}${verb} it, <em>${yt}</em> to <em>${rt}</em>. ` +
         `<span class="bad">${nameOf(loser)} ${sverb(loser, 'loses', 'lose')} ${dmg} Vigil.</span>`);
     sfx.thump();
+    showDamage(loser, dmg);
     if (loser === S.you) { sfx.crack(); flashBlood(); }
     shakeScreen();
     haptic(winner === 'you' ? [0, 40] : [0, 60, 50, 120]);
@@ -1288,9 +1353,9 @@
     const t = handTotal(S.rival);
     const vig = S.rival.vigil;
     let w = 1;
-    if (vig <= 2) w = Math.random() < 0.5 ? 2 : 1;
-    else if (Math.random() < 0.45) w = 2;
-    else if (Math.random() < 0.15) w = 3;
+    if (vig <= 2) w = rnd() < 0.5 ? 2 : 1;
+    else if (rnd() < 0.45) w = 2;
+    else if (rnd() < 0.15) w = 3;
     if (t >= 18) w = Math.max(w, 2);
     return Math.min(3, w);
   }
@@ -1348,7 +1413,7 @@
       if (s > bestScore) { bestScore = s; bestId = id; }
     }
 
-    if (bestId && bestScore >= 5 && Math.random() < 0.85 * (S.rival.accuracy || 1)) {
+    if (bestId && bestScore >= 5 && rnd() < 0.85 * (S.rival.accuracy || 1)) {
       const victim = S.you;
       const def = TRUMPS[bestId];
       if (def.hostile && victim.ward && !def.piercesWard) {
@@ -1377,7 +1442,7 @@
     const pool = arcadePool(streak);
     const fresh = pool.filter((o) => o.id !== S.lastArcadeId);
     const list = fresh.length ? fresh : pool;
-    const pick = list[Math.floor(Math.random() * list.length)];
+    const pick = list[Math.floor(rnd() * list.length)];
     S.lastArcadeId = pick.id;
     return pick;
   }
@@ -1402,6 +1467,13 @@
     const streak = S.arcadeStreak || 0;
     const best = Math.max(streak, save.bestArcade || 0);
     save.bestArcade = best;
+
+    if (S.dailyKey) {
+      const today = utcDateKey();
+      if (S.dailyKey === today && streak > (save.dailyBest.streak || 0)) {
+        save.dailyBest = { date: today, streak: streak };
+      }
+    }
     writeSave();
     render();
 
@@ -1456,6 +1528,20 @@
     }
   }
 
+  function utcDateKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  /* Everyone who plays today gets the same shoe. No server, no account:
+     the date is the seed, and the seed is the whole contract. */
+  function startDaily() {
+    S.dailyKey = utcDateKey();
+    reseed('last-hand-daily:' + S.dailyKey);
+    startArcade();
+    say('Daily ' + S.dailyKey + ' \u2014 the same shoe for everyone who sits down today.');
+    render();
+  }
+
   function startArcade() {
     hideOverlay();
     hideTitle();
@@ -1464,7 +1550,10 @@
 
     const v = vesselOf(S.vesselId);
     // One extra Vigil: arcade duels are meant to be survivable.
-    S.you = makeSide('You', true, { maxVigil: v.maxVigil + 1, vessel: S.vesselId });
+    S.you = makeSide('You', true, {
+      maxVigil: Math.max(1, v.maxVigil + 1 + difficulty().vigil),
+      vessel: S.vesselId
+    });
     S.opponent = null;
     S.opponentIndex = 0;
     S.act = 0;
@@ -1534,6 +1623,18 @@
 
   /* ---- impact --------------------------------------------------- */
 
+  /* A damage cue you can read without seeing red: a numeral, a hatch
+     pattern, a shake and a haptic. Colour is the least of it. */
+  function showDamage(side, dmg) {
+    const host = side.isYou ? $('youSide') : $('rivalSide');
+    if (!host) return;
+    const badge = document.createElement('div');
+    badge.className = 'dmg-badge';
+    badge.textContent = '\u2212' + dmg + ' Vigil';
+    host.appendChild(badge);
+    setTimeout(() => badge.remove(), 1500);
+  }
+
   function flashBlood() {
     const el = $('bloodFlash');
     if (!el) return;
@@ -1550,7 +1651,9 @@
 
     if ($('youName')) $('youName').textContent = vesselOf(S.vesselId).name;
     if ($('rivalName')) $('rivalName').textContent = S.rival.label;
-    if ($('actLabel')) $('actLabel').textContent = 'Act ' + currentAct().numeral;
+    if ($('actLabel')) {
+      $('actLabel').textContent = S.dailyKey ? 'Daily' : ('Act ' + currentAct().numeral);
+    }
     if ($('actProgress')) {
       $('actProgress').textContent =
         Math.min(S.opponentIndex + 1, currentAct().opponents.length) + ' / ' + currentAct().opponents.length;
@@ -1581,6 +1684,10 @@
 
     renderBlade();
     paintPortraits();
+
+    // The candles answer your Vigil: less life, less light.
+    const life = S.you.maxVigil ? S.you.vigil / S.you.maxVigil : 1;
+    document.body.style.setProperty('--vigil', life.toFixed(3));
 
     // the score leans with your danger
     const worst = Math.max(S.you.maxVigil - S.you.vigil, S.rival.maxVigil - S.rival.vigil);
@@ -1649,6 +1756,8 @@
     el.textContent = hidden ? total + '+' : String(total);
     el.classList.toggle('bust', bust);
     el.classList.toggle('hot', !hidden && total === S.target);
+    // colour is the least of the cue: the state is also spelled out
+    el.dataset.state = bust ? 'bust' : (!hidden && total === S.target ? 'exact' : '');
   }
 
   function renderShoe() {
@@ -1843,6 +1952,12 @@
       $('titleAct').textContent = 'Act ' + currentAct().numeral + (save.cleared ? ' \u2014 cleared' : '');
     }
     if ($('titleBest')) $('titleBest').textContent = save.bestArcade || 0;
+    if ($('titleDaily')) {
+      const today = utcDateKey();
+      $('titleDaily').textContent = save.dailyBest.date === today
+        ? String(save.dailyBest.streak)
+        : '\u2014';
+    }
 
     const grid = $('vesselGrid');
     if (!grid) return;
@@ -1898,6 +2013,8 @@
 
   function startAct() {
     const v = vesselOf(S.vesselId);
+    S.dailyKey = null;
+    reseed(null);
     stopTimer();
     resolver = null;
     hideOverlay();
@@ -1906,7 +2023,10 @@
     S.act = Math.max(0, Math.min(save.act || 0, ACTS.length - 1));
     S.opponent = null;
     // Your Vigil deepens as you descend.
-    S.you = makeSide('You', true, { maxVigil: v.maxVigil + S.act, vessel: S.vesselId });
+    S.you = makeSide('You', true, {
+      maxVigil: Math.max(1, v.maxVigil + S.act + difficulty().vigil),
+      vessel: S.vesselId
+    });
     S.opponentIndex = 0;
     S.loadout = BASE_LOADOUT.slice();
     S.lastRound = null;
@@ -2069,7 +2189,42 @@
     registerServiceWorker();
 
     const arcadeBtn = $('arcadeBtn');
-    if (arcadeBtn) arcadeBtn.addEventListener('click', () => { startArcade(); });
+    if (arcadeBtn) {
+      arcadeBtn.addEventListener('click', () => {
+        S.dailyKey = null;
+        reseed(null);
+        startArcade();
+      });
+    }
+
+    const dailyBtn = $('dailyBtn');
+    if (dailyBtn) dailyBtn.addEventListener('click', () => { startDaily(); });
+
+    // ---- difficulty --------------------------------------------
+    function paintDifficulty() {
+      const row = $('difficultyRow');
+      if (!row) return;
+      Array.from(row.querySelectorAll('.diff')).forEach((b) => {
+        const on = b.dataset.diff === (save.difficulty || 'standard');
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      const hint = $('titleHint');
+      if (hint) hint.textContent = difficulty().note;
+    }
+    paintDifficulty();
+
+    const diffRow = $('difficultyRow');
+    if (diffRow) {
+      diffRow.addEventListener('click', (e) => {
+        const b = e.target.closest('.diff');
+        if (!b || !DIFFICULTY[b.dataset.diff]) return;
+        save.difficulty = b.dataset.diff;
+        writeSave();
+        paintDifficulty();
+        sfx.flick();
+      });
+    }
 
     const enter = $('enterBtn');
     if (enter) enter.addEventListener('click', startAct);
@@ -2098,7 +2253,11 @@
       ACT_I: ACT_I,
       ACTS: ACTS,
       arcadePool: arcadePool,
-      arcadeScaled: arcadeScaled
+      arcadeScaled: arcadeScaled,
+      DIFFICULTY: DIFFICULTY,
+      reseed: reseed,
+      rnd: rnd,
+      seedFrom: seedFrom
     };
   }
 
