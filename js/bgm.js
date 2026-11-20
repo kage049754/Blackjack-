@@ -338,5 +338,7 @@
     });
   }
 
-  global.BGM = BGM;
+  /* The live synth is the fallback, and the source of one-off stingers.
+     js/score.js takes over window.BGM with the recorded loops. */
+  global.SynthBGM = BGM;
 })(typeof window !== 'undefined' ? window : globalThis);

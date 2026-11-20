@@ -1,0 +1,25 @@
+{
+  "tracks": {
+    "menu": {
+      "file": "assets/audio/menu.mp3",
+      "seconds": 130.91,
+      "bytes": 1571616,
+      "loop": true
+    },
+    "duel": {
+      "file": "assets/audio/duel.mp3",
+      "seconds": 110.77,
+      "bytes": 1329696,
+      "loop": true
+    },
+    "final": {
+      "file": "assets/audio/final.mp3",
+      "seconds": 82.76,
+      "bytes": 993600,
+      "loop": true
+    }
+  },
+  "sampleRate": 44100,
+  "codec": "mp3",
+  "bitrate": 96
+}

@@ -455,3 +455,57 @@ a 25-minute commitment and sometimes you have three.
 The design intent: arcade should feel *generous* for the first few duels and then turn,
 without a wall. Because Vigil is always full, a single bad round never ends you — only a
 bad opponent does.
+
+---
+
+## 14. Baked audio, and the 3D stage
+
+### 14.1 Two scores, on purpose
+
+`js/bgm.js` is a **realtime** synth: it must run on a phone while the game does.
+That budget is roughly a dozen oscillators. So the music it makes is thin by
+construction.
+
+`scripts/render-score.js` has no such budget. It is an offline renderer: it
+composes the same harmonic world (D phrygian dominant, roots moving D–Bb–F–C every
+four bars) but with bowed string sections of five detuned saws, a three-formant
+choir, odd-harmonic pipe organ, additive harp, timpani and inharmonic bells, all
+through a six-comb / three-allpass Schroeder reverb, then a 1.8-second equal-power
+crossfade back into the head so the loop is seamless.
+
+It writes MP3 at 96 kbps via `@breezystack/lamejs` (build-time only; never shipped).
+The renderer refuses to write a track whose peak is under 0.05 or which contains
+NaN — a silent buffer encodes to a perfectly valid MP3 that sounds like nothing.
+
+| Track | Length | Why it exists |
+|---|---|---|
+| `menu.mp3` | 131 s | slow, sparse, mournful |
+| `duel.mp3` | 111 s | adds timpani and a denser harp |
+| `final.mp3` | 83 s | adds the choir and organ |
+
+At runtime `js/score.js` streams these through Web Audio: each element goes
+element → lowpass → gain → destination, and the filter cutoff tracks intensity
+(700 Hz when calm, ~5.9 kHz when you are one Vigil from death). If the files are
+missing or the browser refuses to decode them, `window.BGM` falls back to the live
+synth without the game noticing.
+
+### 14.2 The 3D stage
+
+`js/models3d.js` is a software renderer on canvas 2D — no WebGL, no three.js, no
+dependencies. Per frame it rotates the mesh by yaw/pitch, projects with mild
+perspective, sorts faces back-to-front, culls back faces by screen-space winding,
+and shades each face from its **model-space** normal against four lights (warm key,
+back rim, cold fill, floor bounce).
+
+Why canvas 2D instead of WebGL: the portrait is 58x72 CSS pixels. A 2D context
+starts instantly, never fails to initialise, and keeps the renderer in one file
+that can be unit-tested in Node.
+
+It is **opt-in**. The honest reason: at 58x72 the hand-drawn vector portraits in
+`js/art.js` carry more character than ~300 flat-shaded polygons do. The 3D stage is
+there, it works, and the toggle in the top bar switches between them.
+
+Known limit: the meshes are primitives (spheres, cones, boxes) with no textures, so
+detail is silhouette and lighting rather than surface. That is the line between
+this and a modelled character, and it is where the project would need an actual
+asset pipeline.

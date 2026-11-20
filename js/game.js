@@ -306,7 +306,7 @@
   function blankSave() {
     return { version: SAVE_VERSION, wins: 0, duels: 0, candles: 0,
              seenIntro: false, reduceMotion: false, musicOn: true,
-             act: 0, cleared: false, bestArcade: 0 };
+             art3d: false, act: 0, cleared: false, bestArcade: 0 };
   }
 
   /** Non-negative integer, or the fallback. Guards against corrupt saves. */
@@ -330,6 +330,7 @@
           out.seenIntro = !!p.seenIntro;
           out.reduceMotion = !!p.reduceMotion;
           out.musicOn = p.musicOn === undefined ? true : !!p.musicOn;
+          out.art3d = !!p.art3d;
           out.act = safeInt(p.act, 0, ACTS.length - 1);
           out.cleared = !!p.cleared;
           out.bestArcade = safeInt(p.bestArcade, 0, 1e6);
@@ -1495,21 +1496,40 @@
     return opp.id === 'dealer' ? 'veiled' : opp.id;
   }
 
+  /* 3D when we can, vector art when we cannot (or when the player opts out). */
+  /* The vector portraits read better at 58x72 than the 3D stage does, so 3D
+     is opt-in. It is a real renderer, not a mock — flip it and judge. */
+  function portraitMode() {
+    return (save.art3d && window.Portraits3D) ? '3d' : '2d';
+  }
+
+  function paintPortraitInto(el, id) {
+    if (!el) return;
+    const mode = portraitMode();
+    const sig = mode + ':' + id;
+    if (el.dataset.art === sig) return;
+    el.dataset.art = sig;
+    el.innerHTML = '';
+
+    if (mode === '3d') {
+      const cv = document.createElement('canvas');
+      cv.className = 'portrait-canvas';
+      el.appendChild(cv);
+      const inst = window.Portraits3D.mount(cv, id);
+      if (inst) return;
+      el.innerHTML = '';   // no 2D context available: fall through to vector art
+    }
+
+    if (window.Art) {
+      el.innerHTML = Art.portrait(id);
+    } else {
+      el.dataset.art = '';
+    }
+  }
+
   function paintPortraits() {
-    if (!window.Art) return;
-
-    const you = $('youPortrait');
-    if (you && you.dataset.art !== S.vesselId) {
-      you.innerHTML = Art.portrait(S.vesselId);
-      you.dataset.art = S.vesselId;
-    }
-
-    const rival = $('rivalPortrait');
-    const rid = opponentArtId();
-    if (rival && rival.dataset.art !== rid) {
-      rival.innerHTML = Art.portrait(rid);
-      rival.dataset.art = rid;
-    }
+    paintPortraitInto($('youPortrait'), S.vesselId);
+    paintPortraitInto($('rivalPortrait'), opponentArtId());
   }
 
   /* ---- impact --------------------------------------------------- */
@@ -1838,12 +1858,10 @@
         + (locked ? ' locked' : '');
       el.disabled = locked;
 
-      if (window.Art) {
-        const por = document.createElement('div');
-        por.className = 'portrait vessel-portrait';
-        por.innerHTML = Art.portrait(id);
-        el.appendChild(por);
-      }
+      const por = document.createElement('div');
+      por.className = 'portrait vessel-portrait';
+      el.appendChild(por);
+      paintPortraitInto(por, id);
 
       const name = document.createElement('span');
       name.className = 'vessel-name';
@@ -1959,6 +1977,31 @@
         save.musicOn = save.musicOn === false;
         writeSave();
         paintMusicBtn();
+
+    // ---- portrait style ----------------------------------------
+    const artBtn = $('artBtn');
+    function paintArtBtn() {
+      if (artBtn) artBtn.textContent = 'Portraits: ' + (portraitMode() === '3d' ? '3D' : '2D');
+    }
+    if (artBtn) {
+      artBtn.addEventListener('click', () => {
+        save.art3d = !save.art3d;
+        writeSave();
+        paintArtBtn();
+        // force a repaint of every mounted portrait
+        ['youPortrait', 'rivalPortrait'].forEach((id) => {
+          const el = $(id);
+          if (el) el.dataset.art = '';
+        });
+        document.querySelectorAll('.vessel-portrait').forEach((el) => {
+          el.dataset.art = '';
+        });
+        if (!save.art3d && window.Portraits3D) Portraits3D.unmountAll();
+        renderTitle();
+        paintPortraits();
+      });
+    }
+    paintArtBtn();
         if (window.BGM) {
           BGM.setEnabled(save.musicOn !== false);
           if (save.musicOn !== false) BGM.start(S.phase === 'title' ? 'title' : 'duel');

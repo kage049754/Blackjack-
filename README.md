@@ -24,15 +24,30 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.0.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.0.0/TheLastHand-v3.0.0.apk)**
+**[⬇ The Last Hand v3.1.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.1.0/TheLastHand-v3.1.0.apk)**
 
-- 5.3 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
-- **SHA-256** `4920579eee8ad89e85b31c024b1b0144ffdc931e208d0f5e176819c0757ffcd3`
+- 8.9 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
 
-**v3.0.0 is the finished game.**
+**v3.1.0 adds a recorded score and a 3D character stage.**
+
+- **The score is now baked, not synthesised live.** `scripts/render-score.js`
+  composes and renders three loops offline — bowed strings, a formant choir, pipe
+  organ, harp, timpani and inhomonic bells through a Schroeder reverb — then encodes
+  them to MP3. 5.5 minutes of music, 3.7 MB, built from source, reproducible.
+  The live synth from v2.0 is still there as the fallback and for one-off stingers.
+- **Each track routes through a lowpass that opens as you lose Vigil** — the score
+  muffles when you are calm and brightens as the blade closes.
+- **A 3D character stage** (`js/models3d.js`): a dependency-free software renderer
+  with real geometry, model-space normals, four lights, back-face culling and depth
+  sorting. Thirteen busts built from spheres, cones and boxes.
+  It ships **off by default** — at 58x72 px the vector portraits read better — and
+  the toggle is in the top bar (`Portraits: 2D / 3D`). Both are real; judge for
+  yourself.
+
+**v3.0.0 was the finished game.**
 
 - **Three acts, nine opponents.** Act I is a gauntlet; Act II is the long table; Act III
   is the head of the table, where the last thing at it has two cheats and no patience.

@@ -1129,3 +1129,21 @@ body.reduce-motion .blood-flash.hit{ animation: none !important; opacity: .35; }
 #ovBody{ white-space: pre-line; }
 
 .title-stats span{ white-space: nowrap; }
+
+/* ============================================================
+   3D portraits
+   ============================================================ */
+
+.portrait-canvas{
+  width: 100%; height: 100%; display: block;
+  /* the renderer already vignettes; this keeps the frame edge soft */
+  border-radius: inherit;
+  background: #07070a;
+}
+
+.vessel-portrait .portrait-canvas{ border-radius: inherit; }
+
+/* the 3D bust reads better with a touch more contrast in the frame */
+.portrait:has(.portrait-canvas){
+  background: #06060a;
+}
