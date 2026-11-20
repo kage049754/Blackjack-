@@ -67,7 +67,7 @@ jobs:
           STATUS=$?
           cat "$RUNNER_TEMP/gradle.log"
           if [ "$STATUS" -ne 0 ]; then
-            python3 ../scripts/gradle-error-annotate.py "$RUNNER_TEMP/gradle.log"
+            python3 ../scripts/annotate-file.py "$RUNNER_TEMP/gradle.log" error "Gradle failure"
             exit "$STATUS"
           fi
 
@@ -82,6 +82,22 @@ jobs:
           echo "apk=$APK" >> "$GITHUB_OUTPUT"
           ls -lh "$APK"
           unzip -l "$APK" | head -n 15
+
+      - name: Verify APK contents
+        run: |
+          APK="${{ steps.find_apk.outputs.apk }}"
+          {
+            echo "file: $(basename "$APK")"
+            echo "size: $(stat -c%s "$APK") bytes ($(numfmt --to=iec "$(stat -c%s "$APK")"))"
+            echo "sha256: $(sha256sum "$APK" | cut -d' ' -f1)"
+            echo ""
+            echo "--- manifest / code ---"
+            unzip -l "$APK" | awk '{print $4}' | grep -E '^(AndroidManifest\.xml|classes[0-9]*\.dex|resources\.arsc)$' | sort
+            echo ""
+            echo "--- bundled game (assets/public) ---"
+            unzip -l "$APK" | awk '{print $4}' | grep -E '^assets/public/' | sort
+          } | tee "$RUNNER_TEMP/apk-report.txt"
+          python3 scripts/annotate-file.py "$RUNNER_TEMP/apk-report.txt" notice "APK verified"
 
       - name: Rename APK
         run: |
