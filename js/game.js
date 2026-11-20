@@ -201,8 +201,9 @@
           name: 'The Veiled Dealer',
           line: 'You have never seen its hands in the same place twice.',
           startTrumps: 3,
-          accuracy: 0.90,
-          cheats: 1
+          accuracy: 0.885,
+          cheats: 1,
+          cheatKind: 'replace'
         }
       ]
     },
@@ -216,16 +217,17 @@
           name: 'The Charnel Warden',
           line: 'It deals to a lower number and calls it mercy.',
           startTrumps: 1,
-          accuracy: 0.93,
+          accuracy: 0.92,
           targetShift: -2,
-          cheats: 0
+          cheats: 1,
+          cheatKind: 'redeal'   // it takes the whole hand back, not one card
         },
         {
           id: 'twins',
           name: 'The Twins',
           line: 'Two of them. They deal you a third card before you have chosen.',
           startTrumps: 2,
-          accuracy: 0.90,
+          accuracy: 0.86,
           extraCard: true,
           cheats: 0
         },
@@ -234,7 +236,7 @@
           name: 'The Candle-Eater',
           line: 'It eats what you are carrying, and it is always hungry.',
           startTrumps: 2,
-          accuracy: 0.96,
+          accuracy: 0.978,
           drain: 0.5,
           cheats: 0
         }
@@ -250,7 +252,7 @@
           name: 'The Hollow Choir',
           line: 'Every mouth is open. None of them are singing to you.',
           startTrumps: 3,
-          accuracy: 0.97,
+          accuracy: 0.982,
           drain: 0.35,
           cheats: 0
         },
@@ -259,19 +261,21 @@
           name: 'The Bone Surgeon',
           line: 'It measures the table the way it measures a body.',
           startTrumps: 2,
-          accuracy: 0.975,
+          accuracy: 0.94,
           targetShift: -3,
-          cheats: 0
+          cheats: 1,
+          cheatKind: 'replace'   // it re-measures the table and finds a better number
         },
         {
           id: 'head',
           name: 'The Thing at the Head of the Table',
           line: 'It has been waiting for you to be worth its time.',
           startTrumps: 3,
-          accuracy: 0.98,
-          cheats: 2,
+          accuracy: 0.985,
+          cheats: 1,
           drain: 0.3,
-          cheatsAgain: true
+          cheatsAgain: true,
+          cheatKind: 'replace'
         }
       ]
     }
@@ -279,6 +283,80 @@
 
   /* Kept as the first act; tests and older code refer to it by name. */
   const ACT_I = ACTS[0];
+
+  /* Every chair has a voice. The prose lives here, not in the opponent table,
+     so the balance harness never has to look at it. Four beats per boss:
+     the deal, your bust, the hand you take, the hand they take. */
+  const TAUNTS = {
+    croupier: {
+      deal: ['The Croupier deals without looking. It has never needed to.'],
+      yourBust: ['\u201cOver,\u201d it says, the way you would say next.'],
+      yourWin: ['It gathers the cards as though the hand had not happened.'],
+      theirWin: ['\u201cClose,\u201d it says. It is not a compliment.']
+    },
+    mourner: {
+      deal: ['She wagers a ring she no longer owns. Nobody calls it a lie.'],
+      yourBust: ['\u201cThere,\u201d she says. \u201cNow we are both owed something.\u201d'],
+      yourWin: ['She pays you with a coin still warm from someone else.'],
+      theirWin: ['She apologises while she takes it. She means it.']
+    },
+    dealer: {
+      deal: ['Its hands are somewhere else when the cards land.'],
+      yourBust: ['\u201cYou did that yourself,\u201d the veil says. \u201cI only watched.\u201d'],
+      yourWin: ['The veil does not move. Under it, something rearranges its patience.'],
+      theirWin: ['\u201cThe sleeve,\u201d it says, \u201cis a rumour.\u201d']
+    },
+    charnel: {
+      deal: ['The Warden sets the number lower, and calls it mercy.'],
+      yourBust: ['It writes your total down without looking at it.'],
+      yourWin: ['It takes its cards back and deals itself a new hand. It still loses.'],
+      theirWin: ['\u201cNineteen,\u201d it says. \u201cA number a body can reach.\u201d']
+    },
+    twins: {
+      deal: ['One deals. The other already knows what you were given.'],
+      yourBust: ['Both of them say over at once, a half-beat apart.'],
+      yourWin: ['\u201cShe cheated,\u201d says one. \u201cShe was allowed to,\u201d says the other.'],
+      theirWin: ['They count your cards together, out loud, slowly.']
+    },
+    candle: {
+      deal: ['A candle shortens. It is not one of the ones on the table.'],
+      yourBust: ['It swallows the light along with your turn.'],
+      yourWin: ['It eats nothing this hand, and that is the worst thing it does.'],
+      theirWin: ['The room gets smaller by one candle.']
+    },
+    choir: {
+      deal: ['Nine mouths open on the same breath.'],
+      yourBust: ['The choir holds the note of your total until it becomes a word.'],
+      yourWin: ['The singing stops. That has not happened in this room before.'],
+      theirWin: ['They sing your hand back to you, in order, corrected.']
+    },
+    surgeon: {
+      deal: ['It lays the cards out the way it lays out instruments.'],
+      yourBust: ['It notes the exact point where you went over.'],
+      yourWin: ['It puts the cards down and looks at you as if at a growth.'],
+      theirWin: ['\u201cThe margin,\u201d it says, \u201cwas always on my side.\u201d']
+    },
+    head: {
+      deal: ['It has been waiting for you to be worth its time.'],
+      yourBust: ['It does not react. It has watched a great many people do that.'],
+      yourWin: ['\u201cAgain,\u201d it says. Not to you.'],
+      theirWin: ['Something under the table takes your chair away and puts it back.']
+    }
+  };
+
+  /* A boss speaks once per beat, and spreads its lines instead of repeating
+     the same sentence forever. */
+  const tauntSeen = {};
+  function taunt(beat) {
+    const opp = S.opponent;
+    if (!opp) return;
+    const set = TAUNTS[opp.id];
+    if (!set || !set[beat] || !set[beat].length) return;
+    const key = opp.id + ':' + beat;
+    const n = (tauntSeen[key] = (tauntSeen[key] || 0) + 1);
+    S.taunt = set[beat][(n - 1) % set[beat].length];
+    S.tauntBeat = beat;
+  }
 
   function currentAct() {
     const i = Math.max(0, Math.min(save.act || 0, ACTS.length - 1));
@@ -630,6 +708,7 @@
       revealed: false,
       vessel: opts.vessel || null,
       cheat: !!(opts.cheats || opts.cheat),
+      cheatKind: opts.cheatKind || 'replace',
       cheatsLeft: opts.cheats || (opts.cheat ? 1 : 0),
       cheatUsed: false,
       accuracy: typeof opts.accuracy === 'number' ? opts.accuracy : 1,
@@ -653,7 +732,9 @@
     opponentIndex: 0,
     loadout: [],
     draftOptions: [],
-    lastRound: null
+    lastRound: null,
+    taunt: '',
+    tauntBeat: ''
   };
 
   /** The trump deck you start an act with. Deepens via the draft. */
@@ -685,6 +766,78 @@
       const t = d[i]; d[i] = d[j]; d[j] = t;
     }
     return d;
+  }
+
+  /**
+   * The Warden's redeal: which hand does it keep? A bust scores below every
+   * standing hand, so the comparison is "distance from the number, with a
+   * bust as the worst possible outcome". Pure, so it can be tested.
+   */
+  function redealChoice(before, fresh, target) {
+    const score = (cards) => {
+      const t = cards.reduce((a, c) => a + (typeof c === 'number' ? c : c.v), 0);
+      return t > target ? -t : t;
+    };
+    return score(fresh) > score(before) ? 'fresh' : 'before';
+  }
+
+  /**
+   * Why that handwas lost, in the player's own numbers. Pure, so the lesson
+   * can be tested without a table: pass the recorded round, the total you
+   * stood on, and what was left in the shoe.
+   */
+  function handLesson(r, stood, deck) {
+    const parts = ['The last hand: you had ' + r.yt + ', they had ' + r.rt
+      + ', the number was ' + r.target + '.'];
+
+    // Both over: "closer to the number" is the rule, so say it plainly.
+    if (r.youBust && r.rivalBust) {
+      parts.push('You both went over. The closer hand takes it, and theirs was closer.');
+      return parts.join(' ');
+    }
+
+    if (r.youBust) {
+      parts.push('You drew past it. Standing on ' + stood + ' '
+        + (stood > r.rt ? 'would have won the hand.'
+          : stood === r.rt ? 'would have tied it, and a tie takes nobody.'
+            : 'would still have lost, but by less.'));
+      return parts.join(' ');
+    }
+
+    if (r.rivalBust) {
+      parts.push('You both went over. The closer hand takes it, and theirs was closer.');
+      return parts.join(' ');
+    }
+
+    // They stopped on the number itself: no card in the world beats it.
+    if (r.rt >= r.target) {
+      parts.push('They stood exactly on the number. There is no card that beats it '
+        + '\u2014 the hand was lost the moment they stopped.');
+      return parts.join(' ');
+    }
+
+    parts.push('You stood. You needed ' + (r.rt + 1) + '.');
+
+    const outs = (deck || []).filter((v) => r.yt + v <= r.target && r.yt + v > r.rt);
+    if (outs.length) {
+      const best = Math.max.apply(null, outs);
+      parts.push('The shoe still held ' + outs.length + ' card'
+        + (outs.length === 1 ? '' : 's') + ' that would have won it \u2014 the highest a '
+        + best + '.');
+    } else {
+      parts.push('Nothing left in the shoe could have carried you. '
+        + 'That hand was lost when it was dealt.');
+    }
+    return parts.join(' ');
+  }
+
+  function defeatTeaching() {
+    const r = S.lastRound;
+    if (!r) return '';
+    const yours = S.you.cards || [];
+    const lastCard = yours.length ? yours[yours.length - 1].v : 0;
+    const stood = r.youBust ? r.yt - lastCard : r.yt;
+    return handLesson(r, stood, S.deck);
   }
 
   function other(side) { return side === S.you ? S.rival : S.you; }
@@ -856,6 +1009,7 @@
       maxVigil: opp.vigil || START_VIGIL,
       startTrumps: opp.startTrumps,
       cheats: Math.max(0, (opp.cheats || 0) + difficulty().cheats),
+      cheatKind: opp.cheatKind || 'replace',
       accuracy: Math.max(0.35, Math.min(0.995, (opp.accuracy || 0.8) + difficulty().accuracy))
     });
 
@@ -1073,17 +1227,8 @@
       + ' of ' + currentAct().opponents.length + '. '
       + 'Somewhere above, something with your face reshuffles.';
 
-    if (S.lastRound) {
-      const r = S.lastRound;
-      const left = S.deck.length;
-      body += ' The last hand: you had ' + r.yt + ', they had ' + r.rt
-        + ', the target was ' + r.target + '.';
-      body += r.youBust
-        ? ' You went over. The shoe still held what you needed.'
-        : ' You did not go far enough.';
-      body += ' ' + left + ' card' + (left === 1 ? '' : 's')
-        + ' were still in the shoe \u2014 that is where the answer was.';
-    }
+    const why = defeatTeaching();
+    if (why) body += ' ' + why;
 
     showOverlay('The Blade Finds You', body, [{
       label: 'Rise Again',
@@ -1171,6 +1316,7 @@
     }
 
     say('The cards are dealt. One remains unseen in each hand.');
+    taunt('deal');
     render();
     await sleep(500);
 
@@ -1218,6 +1364,7 @@
       if (a.type === 'draw') {
         const v = drawOne(S.you);
         if (v !== null) say(`You draw a <em>${v}</em>.`);
+        if (isBust(S.you)) taunt('yourBust');
         sfx.flick();
         done = true;
         render();
@@ -1310,11 +1457,71 @@
     if (veil) veil.classList.remove('show');
   }
 
-  async function playCheat() {
-    await cheatSetPiece();
+  /**
+   * The Charnel Warden's trick: it does not fix a card, it takes the whole
+   * hand back and deals itself a different one. Stronger than the sleeves —
+   * and the only cheat that can come out worse than the hand it discarded.
+   */
+  async function playRedeal() {
     const r = S.rival;
+    const target = S.target;
+
+    say('The Warden lifts its cards off the table and puts them back in the shoe. '
+      + 'It deals itself again.');
+    render();
+    sfx.wrong();
+    if (window.BGM) { BGM.stinger('cheat'); BGM.duck(1800); }
+    haptic([0, 40, 60, 120]);
+    await sleep(1100);
+
+    const side = $('rivalHand');
+    if (side) { side.classList.remove('redealt'); void side.offsetWidth; side.classList.add('redealt'); }
+
+    const before = r.cards.slice();
+    before.forEach((c) => S.deck.push(c.v));
+    for (let i = S.deck.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      const t = S.deck[i]; S.deck[i] = S.deck[j]; S.deck[j] = t;
+    }
+
+    const fresh = [];
+    if (S.deck.length >= 2) {
+      fresh.push({ v: S.deck.shift(), hidden: true });
+      fresh.push({ v: S.deck.shift(), hidden: false });
+    }
+
+    if (!fresh.length) {
+      say('The shoe is empty. It puts the old hand back, and does not look pleased.');
+      r.cards = before;
+      render();
+      await sleep(900);
+      return;
+    }
+
+    const keepsNew = redealChoice(before, fresh, target) === 'fresh';
+    r.cards = keepsNew ? fresh : before;
+    if (!keepsNew) {
+      // the discarded cards go back in the shoe
+      fresh.forEach((c) => S.deck.push(c.v));
+    }
+
+    say(keepsNew
+      ? 'The new hand is kinder to it. It was always going to be.'
+      : 'The new hand is worse. It keeps the old one and says nothing about it.');
+    render();
+    sfx.thump();
+    await sleep(1000);
+  }
+
+  async function playCheat() {
+    const r = S.rival;
+    const kind = r.cheatKind || 'replace';
+
+    await cheatSetPiece();
     r.cheatUsed = true;
     r.cheatsLeft = Math.max(0, r.cheatsLeft - 1);
+
+    if (kind === 'redeal') return playRedeal();
 
     say('The dealer\u2019s sleeve moves. The card you were watching was never the card.');
     render();
@@ -1388,6 +1595,8 @@
       await sleep(1400);
       return;
     }
+
+    taunt(winner === 'you' ? 'yourWin' : 'theirWin');
 
     const w = winner === 'you' ? S.you : S.rival;
     const loser = winner === 'you' ? S.rival : S.you;
@@ -1557,11 +1766,12 @@
 
     showOverlay(
       'The Hand Ends',
-      streak === 0
+      (streak === 0
         ? 'You lost the first hand. The table did not even lean forward. Try another.'
         : 'You took ' + streak + ' duel' + (streak === 1 ? '' : 's')
           + ' before the blade found you. Best run: ' + best + '.\n\n'
-          + 'Candles: ' + save.candles + '.',
+          + 'Candles: ' + save.candles + '.')
+        + (defeatTeaching() ? '\n\n' + defeatTeaching() : ''),
       [{
         label: 'Deal Again',
         cls: 'primary',
@@ -1758,6 +1968,18 @@
 
     const log = $('log');
     log.innerHTML = S.message || '';
+
+    const tEl = $('taunt');
+    if (tEl) {
+      const line = S.taunt || '';
+      if (tEl.textContent !== line) {
+        tEl.textContent = line;
+        tEl.classList.remove('show');
+        void tEl.offsetWidth;          // restart the fade on a new line
+        if (line) tEl.classList.add('show');
+      }
+      tEl.dataset.beat = S.tauntBeat || '';
+    }
     log.classList.toggle('bad', /busts|loses/.test(S.message));
 
     renderBlade();
@@ -2363,7 +2585,11 @@
       DIFFICULTY: DIFFICULTY,
       reseed: reseed,
       rnd: rnd,
-      seedFrom: seedFrom
+      seedFrom: seedFrom,
+      TAUNTS: TAUNTS,
+      COSMETICS: COSMETICS,
+      redealChoice: redealChoice,
+      handLesson: handLesson
     };
   }
 

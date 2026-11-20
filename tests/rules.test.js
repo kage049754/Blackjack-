@@ -13,7 +13,8 @@ const path = require('path');
 const game = require(path.resolve(__dirname, '..', 'js', 'game.js'));
 
 const { computeWinner, totalOf, TRUMPS, VESSELS, ACT_I, ACTS, rollDraft, MAX_COPIES,
-        BASE_LOADOUT, arcadePool, arcadeScaled, DIFFICULTY, reseed, rnd, seedFrom } = game;
+        BASE_LOADOUT, arcadePool, arcadeScaled, DIFFICULTY, reseed, rnd, seedFrom,
+        TAUNTS, COSMETICS, redealChoice, handLesson } = game;
 
 let passed = 0;
 let failed = 0;
@@ -132,9 +133,15 @@ check('act III is harder than act II', avg(ACTS[2]) > avg(ACTS[1]), true);
 
 check('the final chair is the thing at the head of the table',
   ACTS[2].opponents[2].id, 'head');
-check('the boss cheats twice', ACTS[2].opponents[2].cheats, 2);
-check('nothing earlier cheats twice',
-  chairs.filter((o) => o.cheats >= 2).length, 1);
+/* v3.6 re-cut the final chair: its cheat now fires only when it is *losing*
+   (which is what ships), so a second charge measured at a 22% hero win rate —
+   below anything playable. It keeps the highest accuracy and the drain; the
+   Warden and the Surgeon carry the other tricks. */
+check('the boss cheats', ACTS[2].opponents[2].cheats >= 1, true);
+check('no chair cheats more than the final chair',
+  chairs.every((o) => (o.cheats || 0) <= ACTS[2].opponents[2].cheats), true);
+check('the final chair is the hardest in the campaign',
+  ACTS[2].opponents[2].accuracy >= Math.max.apply(null, chairs.map((o) => o.accuracy)), true);
 
 section('New mechanics');
 
@@ -262,6 +269,66 @@ check('matching AI accuracy never drops below a floor',
   chairs.every((o) => Math.max(0.35, o.accuracy + DIFFICULTY.casual.accuracy) >= 0.35), true);
 check('nightmare never produces negative cheat charges',
   chairs.every((o) => Math.max(0, (o.cheats || 0) + DIFFICULTY.nightmare.cheats) >= 0), true);
+
+/* ---------- v3.6: boss voices and the two cheat kinds ----------
+   Every chair must have all four beats, or a boss goes silent at the exact
+   moment the game is trying to say something. */
+const BEATS = ['deal', 'yourBust', 'yourWin', 'theirWin'];
+const allOpps = ACTS.reduce((a, act) => a.concat(act.opponents), []);
+check('nine chairs, nine voices', allOpps.length, 9);
+check('every chair has taunt lines for every beat',
+  allOpps.every((o) => TAUNTS[o.id] && BEATS.every((b) => Array.isArray(TAUNTS[o.id][b]) && TAUNTS[o.id][b].length > 0)),
+  true);
+check('no taunt table belongs to a chair that does not exist',
+  Object.keys(TAUNTS).every((id) => allOpps.some((o) => o.id === id)), true);
+check('every taunt line is a real sentence',
+  allOpps.every((o) => BEATS.every((b) => TAUNTS[o.id][b].every((l) => typeof l === 'string' && l.length > 12))),
+  true);
+
+const KINDS = ['replace', 'redeal'];
+check('every cheat has a known kind',
+  allOpps.filter((o) => (o.cheats || 0) > 0).every((o) => KINDS.indexOf(o.cheatKind || 'replace') >= 0),
+  true);
+check('both cheat kinds are actually used in the campaign',
+  KINDS.every((k) => allOpps.some((o) => (o.cheats || 0) > 0 && (o.cheatKind || 'replace') === k)), true);
+check('the Warden is the redeal chair',
+  allOpps.filter((o) => (o.cheatKind || 'replace') === 'redeal').map((o) => o.id).join(','), 'charnel');
+
+/* ---------- the defeat screen teaches ---------- */
+check('a bust says what standing would have done',
+  /would have won the hand/.test(handLesson({ yt: 24, rt: 16, target: 21, youBust: true }, 17, [])), true);
+check('a bust that would still have lost says so, and does not flatter',
+  /would still have lost, but by less/.test(handLesson({ yt: 24, rt: 20, target: 21, youBust: true }, 17, [])), true);
+check('standing on the number is called unwinnable, not "you needed 22"',
+  /no card that beats it/.test(handLesson({ yt: 15, rt: 21, target: 21, youBust: false }, 15, [4, 5])), true);
+check('standing on the number never asks for an impossible card',
+  /needed 22/.test(handLesson({ yt: 15, rt: 21, target: 21, youBust: false }, 15, [4])), false);
+check('a winnable hand names the outs still in the shoe',
+  /The shoe still held 2 cards/.test(handLesson({ yt: 15, rt: 18, target: 21, youBust: false }, 15, [4, 5, 11])), true);
+check('an unwinnable hand says the shoe had nothing',
+  /Nothing left in the shoe/.test(handLesson({ yt: 20, rt: 20, target: 21, youBust: false }, 20, [9])), true);
+check('both bust blames the closer hand, not the player',
+  /closer hand takes it/.test(handLesson({ yt: 24, rt: 23, target: 21, youBust: true, rivalBust: true }, 20, [])), true);
+
+/* ---------- the Warden's redeal ---------- */
+check('a better redealt hand is kept',
+  redealChoice([{ v: 4 }, { v: 5 }], [{ v: 10 }, { v: 9 }], 19), 'fresh');
+check('a worse redealt hand is thrown back',
+  redealChoice([{ v: 10 }, { v: 9 }], [{ v: 2 }, { v: 3 }], 19), 'before');
+check('a redeal that busts never replaces a standing hand',
+  redealChoice([{ v: 9 }, { v: 9 }], [{ v: 11 }, { v: 11 }], 19), 'before');
+check('a redeal that busts less badly still replaces a worse bust',
+  redealChoice([{ v: 11 }, { v: 11 }], [{ v: 10 }, { v: 10 }], 19), 'fresh');
+check('a tie keeps the hand already on the table',
+  redealChoice([{ v: 10 }, { v: 5 }], [{ v: 9 }, { v: 6 }], 19), 'before');
+
+/* ---------- v3.5: cosmetics ---------- */
+check('the free cosmetic is free, in both groups',
+  COSMETICS.back.filter((c) => c.cost === 0).length + COSMETICS.cloth.filter((c) => c.cost === 0).length, 2);
+check('every cosmetic id is unique across groups',
+  new Set(COSMETICS.back.concat(COSMETICS.cloth).map((c) => c.id)).size, 6);
+check('cosmetics are priced but never a power gate',
+  ['back', 'cloth'].every((g) => COSMETICS[g].every((c) => typeof c.cost === 'number' && c.cost >= 0)), true);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);

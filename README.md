@@ -24,12 +24,31 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.5.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.5.0/TheLastHand-v3.5.0.apk)**
+**[⬇ The Last Hand v3.6.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.6.0/TheLastHand-v3.6.0.apk)**
 
-- 8.9 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
+- 9 245 822 bytes (8.9 MB) · `sha256 3360dbf2…b40c1c` · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
+
+**v3.6.0 — the chairs have voices, and the table tells you why you died.**
+
+- **Every boss speaks.** Four beats per chair — the deal, your bust, the hand you
+  take, the hand they take — twenty-six lines written per opponent, fading in under
+  their hand. The Croupier is bored, the Twins finish each other's sentences, the
+  Thing at the Head of the Table is not talking to you.
+- **The defeat screen teaches.** It names your total, theirs and the number, then
+  says what you actually did: what standing would have won, how many cards left in
+  the shoe would have carried you, or that the hand was lost when it was dealt. It
+  no longer claims you "did not go far enough" when they had already stopped on 21.
+- **A second kind of cheat.** The Charnel Warden now takes its whole hand off the
+  table and deals itself another — the only trick in the game that can come out
+  worse than the hand it threw away, and the only one with its own animation.
+- **The cheat trigger was wrong in the harness, not the game.** `balance.js` modelled
+  the boss cheating when it *busted*; the game has it cheat when it is *losing*.
+  Fixing the model showed the documented v3.4 numbers were flattering: the Thing
+  measured 42.8% there and 22.3% in reality. Accuracy was re-tuned against the
+  shipped rule until the curve held (mean 52.9%, final chair 32.0%).
 
 **v3.5.0 — a crypt you can furnish.**
 

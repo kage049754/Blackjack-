@@ -1309,3 +1309,41 @@ body[data-cloth="wine"] .candlelight{
     radial-gradient(90% 70% at 50% 30%, rgba(142,27,24,.24), transparent 75%),
     radial-gradient(120% 100% at 50% 50%, #1a0d0e 0%, #100708 55%, #060304 100%);
 }
+
+/* ---- boss voices ------------------------------------------------
+   A single line under the rival's hand. It fades in on a new beat and
+   leaves a reserved slot so the table never jumps when a boss speaks. */
+.taunt{
+  min-height: 2.6em;
+  margin-top: 10px;
+  padding: 0 6px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-style: italic;
+  letter-spacing: .025em;
+  color: rgba(214,198,172,.78);
+  text-align: center;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .45s ease, transform .45s ease;
+}
+.taunt.show{ opacity: 1; transform: translateY(0); }
+.taunt[data-beat="yourBust"]{ color: rgba(196,116,104,.9); }
+.taunt[data-beat="theirWin"]{ color: rgba(206,168,120,.92); }
+.taunt[data-beat="yourWin"]{ color: rgba(150,186,160,.9); }
+@media (prefers-reduced-motion: reduce){
+  .taunt{ transition: none; transform: none; }
+}
+
+/* the Warden's redeal: the hand lifts, comes back different */
+#rivalHand.redealt .card{
+  animation: redeal-lift .55s ease;
+}
+@keyframes redeal-lift{
+  0%{ transform: translateY(0) rotate(0deg); }
+  35%{ transform: translateY(-14px) rotate(-3deg); opacity: .35; }
+  100%{ transform: translateY(0) rotate(0deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce){
+  #rivalHand.redealt .card{ animation: none; }
+}

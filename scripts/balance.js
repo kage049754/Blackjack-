@@ -7,7 +7,10 @@
  * two cards each, hidden hole card, both-bust resolution) and replays a few
  * thousand duels against each opponent at their current accuracy.
  *
- *   node scripts/balance.js [--duels 500]
+ *   node scripts/balance.js [--duels 500] [--no-cheats]
+ *
+ * Cheats are modelled the way they ship: the boss spends one only when the
+ * round is already lost, then plays its own kind (replace / redeal).
  *
  * It is a model of the rules, not the shipped UI loop: it uses the shipped
  * `computeWinner` and the shipped opponent table from js/game.js, but the
@@ -25,6 +28,7 @@ const { computeWinner, ACTS } = game;
 
 const argv = process.argv.slice(2);
 const DUELS = Number((argv[argv.indexOf('--duels') + 1]) || 500);
+const NO_CHEATS = argv.includes('--no-cheats');
 
 /* ---------- a deterministic model of the shoe ---------- */
 function makeRng(seed) {
@@ -66,11 +70,47 @@ function playerWantsCard(total, deck, target) {
 /* ---------- one duel ---------- */
 function sum(cards) { return cards.reduce((a, b) => a + b, 0); }
 
+/* A bust scores below every standing hand, which is what "closer to the
+   number" means once one side has gone over. */
+function cheatScore(cards, target) {
+  const t = sum(cards);
+  return t > target ? -t : t;
+}
+
+function applyCheat(rival, deck, target, kind) {
+  if (kind === 'redeal') {
+    if (deck.length < 2) return false;
+    const fresh = [deck.shift(), deck.shift()];
+    if (cheatScore(fresh, target) > cheatScore(rival, target)) {
+      const old = rival.slice();
+      rival.length = 0;
+      fresh.forEach((v) => rival.push(v));
+      old.forEach((v) => deck.push(v));
+    } else {
+      fresh.forEach((v) => deck.push(v));
+    }
+    return true;
+  }
+
+  // 'replace': swap the weakest card for the best one that keeps it under
+  let worst = 0;
+  for (let i = 1; i < rival.length; i++) if (rival[i] < rival[worst]) worst = i;
+  const kept = sum(rival) - rival[worst];
+  let best = null;
+  for (const v of deck) {
+    if (kept + v <= target && (best === null || v > best)) best = v;
+  }
+  if (best === null) return false;
+  deck.push(rival[worst]);
+  rival[worst] = best;
+  return true;
+}
+
 function duel(opp, rng) {
   const target = Math.max(12, 21 + (opp.targetShift || 0));
   let youVigil = 5;
   let rivalVigil = 5;
-  let cheatsLeft = opp.cheats || 0;
+  let cheatsLeft = NO_CHEATS ? 0 : (opp.cheats || 0);
 
   let round = 0;
   while (youVigil > 0 && rivalVigil > 0 && round < 40) {
@@ -81,9 +121,15 @@ function duel(opp, rng) {
     const rival = [deck.shift(), deck.shift()];
     if (opp.extraCard && deck.length) you.push(deck.shift());
 
-    // you draw while the odds are kind
+    // You draw while the odds are kind. The drain bosses eat your trumps, so
+    // you have fewer answers than this model can see: it is modelled as a
+    // matching chance of a bad decision, which is what losing your outs feels
+    // like at the table.
     let guard = 0;
-    while (deck.length && guard++ < 12 && playerWantsCard(sum(you), deck, target)) {
+    while (deck.length && guard++ < 12) {
+      let want = playerWantsCard(sum(you), deck, target);
+      if (opp.drain && rng() < opp.drain * 0.15) want = !want;
+      if (!want) break;
       you.push(deck.shift());
     }
 
@@ -96,21 +142,14 @@ function duel(opp, rng) {
       rival.push(deck.shift());
     }
 
-    // the boss bends the rules when the round is already lost
-    if (cheatsLeft > 0 && sum(rival) > target) {
-      const worst = rival.indexOf(Math.min.apply(null, rival));
-      const kept = sum(rival) - rival[worst];
-      let best = null;
-      for (const v of deck) {
-        if (kept + v <= target && (best === null || v > best)) best = v;
-      }
-      if (best !== null) {
-        rival[worst] = best;
-        cheatsLeft--;
-      }
+    // The boss bends the rules only when the round is already lost: same
+    // trigger as the shipped showdown, then its own kind of trick.
+    let winner = computeWinner(sum(you), sum(rival), target);
+    if (cheatsLeft > 0 && winner === 'you') {
+      applyCheat(rival, deck, target, opp.cheatKind || 'replace');
+      cheatsLeft--;
+      winner = computeWinner(sum(you), sum(rival), target);
     }
-
-    const winner = computeWinner(sum(you), sum(rival), target);
     if (winner === 'you') rivalVigil -= 2;
     else if (winner === 'rival') youVigil -= 2;
   }

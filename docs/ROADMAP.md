@@ -2,7 +2,8 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.5.0 — M2 complete, cosmetics shipped, difficulty tuned from simulation data. Difficulty modes, the daily
+**Status: v3.6.0 — boss voices, a defeat screen that teaches, two cheat kinds, cosmetics, difficulty tuned from
+simulation data. Difficulty modes, the daily
 seeded run, colour-blind-safe damage cues, a cheat set-piece, candlelight that answers your Vigil, and a candle-priced
 cosmetics shop (card backs, table cloths). Three acts and nine opponents, an arcade mode, thirteen vector characters,
 a generative score, offline APK shipping.**
@@ -136,11 +137,11 @@ Size: **S** ≤ 1 day · **M** ≈ 2–3 days · **L** ≈ 1 week · **XL** > 1 
 | # | Task | Size | Notes |
 |---|---|---|---|
 | 7 | ~~Trump deck-building between acts~~ ✅ **shipped v1.2** | L | Turns a card game into a *build* |
-| 8 | Boss personality: taunts, tempo | M | Text + timing, no art needed |
+| 8 | ~~Boss personality: taunts, tempo~~ ✅ **shipped v3.6** | M | Four beats per chair in `TAUNTS`; 26 lines, faded in under the rival's hand |
 | 9 | ~~Streak / daily seed~~ ✅ **shipped v3.2** | M | `reseed()` + mulberry32; every gameplay roll goes through `rnd()` |
-| 10 | Loss screen that teaches | S | Show *why* you lost: the card you ignored |
+| 10 | ~~Loss screen that teaches~~ ✅ **shipped v3.6** | S | `handLesson()` — pure and tested: what standing would have won, the outs left in the shoe, or "lost when it was dealt" |
 | 11 | ~~Difficulty modes~~ ✅ **shipped v3.2** | M | Casual / Standard / Nightmare: Vigil, accuracy and cheat charges |
-| 12 | Second boss with a different cheat | L | e.g. forces a re-deal |
+| 12 | ~~Second boss with a different cheat~~ ✅ **shipped v3.6** | L | The Charnel Warden's `redeal`: it takes its whole hand back and deals again — the only cheat that can backfire |
 
 ### P2 — depth & longevity
 
@@ -328,29 +329,34 @@ Completed in v3.3/v3.4: local stat page (P2-16) and the balance harness.
 2. **M5 signing** — blocked on a keystore secret; see P0-1.
 3. **M4 PvP** — blocked on a server.
 
-### Balance evidence (v3.4.0)
+### Balance evidence (v3.6.0)
 
-`node scripts/balance.js --duels 600` — models the real ruleset (1-11 shoe, two cards,
+`node scripts/balance.js --duels 2000` — models the real ruleset (1-11 shoe, two cards,
 hidden hole card, both-bust resolution), uses the shipped `computeWinner` and the
-shipped opponent table. Trumps and the Candle-Eater's drain are excluded on purpose:
-they are player agency, and modelling them would measure the harness rather than the
-opponent.
+shipped opponent table, and now models the shipped cheat trigger: **the boss spends a
+charge only when the round is already lost**, then plays its own kind (`replace` or
+`redeal`). Trumps are still excluded; the drain bosses are modelled as a matching
+chance of a bad decision, because losing your answers is what drain actually does.
 
-| Chair | Accuracy | Hero win rate |
-|---|---|---|
-| Pale Croupier | 62% | 82.7% |
-| Mourner | 84% | 71.0% |
-| Veiled Dealer | 90% | 51.5% |
-| Charnel Warden | 93% | 63.3% |
-| Twins | 90% | 51.3% |
-| Candle-Eater | 96% | 55.5% |
-| Hollow Choir | 97% | 57.3% |
-| Bone Surgeon | 97.5% | 53.2% |
-| The Thing | 98% + 2 cheats | 42.8% |
+| Chair | Acc. | Trick | Hero win rate |
+|---|---|---|---|
+| Pale Croupier (I) | 62% | — | 83.9% |
+| Mourner (I) | 84% | — | 70.2% |
+| Veiled Dealer (I) | 88.5% | replace | 49.9% |
+| Charnel Warden (II) | 92% | redeal, target 19 | 54.4% |
+| Twins (II) | 86% | your third card | 52.3% |
+| Candle-Eater (II) | 97.8% | drain 50% | 48.0% |
+| Hollow Choir (III) | 98.2% | drain 35% | 46.9% |
+| Bone Surgeon (III) | 94% | replace, target 18 | 38.6% |
+| The Thing (III) | 98.5% | replace, drain 30% | 32.0% |
 
-What the first run found: **Act II opened easier than Act I closed** (74% vs 45%), so
-the second act was a reward-free step down. Accuracy was re-tuned twice against this
-table. Each act now opens with a breather and descends; the mean hero win rate is 58.7%.
+Mean 52.9%. Each act opens with a breather and descends; the final chair is the
+hardest thing in the campaign at a third of its hands.
 
-Honest caveat: the model has no trumps, so a real player who drafts well will do
-better than these numbers. They are a floor, not a prediction.
+**Correction to v3.4.** That table was measured against a cheat rule that never
+shipped — the model had the boss cheat *when it busted*, while the game has it cheat
+*when it is losing*. A cheat that fires on a bust is a small mercy; one that fires on
+a loss is a stolen round. Re-measured honestly, the Thing was at 22.3%, not 42.8%.
+The numbers above are from the corrected model, and the accuracy of every chair was
+re-tuned against it.
+
