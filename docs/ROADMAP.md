@@ -2,7 +2,7 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.2.0 — M2 complete. Difficulty modes, the daily seeded run, colour-blind-safe
+**Status: v3.3.0 — M2 complete. Difficulty modes, the daily seeded run, colour-blind-safe
 damage cues, a cheat set-piece, and candlelight that answers your Vigil. Three acts and nine opponents, an
 arcade mode, thirteen vector characters, a generative score, offline APK shipping.**
 Target: **v2.0 — Steam + Android release** with real-time PvP.
@@ -148,7 +148,7 @@ Size: **S** ≤ 1 day · **M** ≈ 2–3 days · **L** ≈ 1 week · **XL** > 1 
 | 13 | Act II survival mode | L |
 | 14 | Endless gauntlet + leaderboard | L |
 | 15 | Cosmetics shop (candles only, never paid power) | M |
-| 16 | Local stat page (win rate, best hand, trumps used) | S |
+| 16 | ~~Local stat page~~ ✅ **shipped v3.3** | S | Hands, bust rate, best hand, trumps; device-local only |
 | 17 | Spectator/replay of a lost duel | L |
 
 ### P3 — multiplayer

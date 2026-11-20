@@ -349,7 +349,8 @@
     return { version: SAVE_VERSION, wins: 0, duels: 0, candles: 0,
              seenIntro: false, reduceMotion: false, musicOn: true,
              art3d: false, act: 0, cleared: false, bestArcade: 0,
-             difficulty: 'standard', dailyBest: { date: '', streak: 0 } };
+             difficulty: 'standard', dailyBest: { date: '', streak: 0 },
+             stats: { hands: 0, busts: 0, best: 0, trumps: 0, losses: 0 } };
   }
 
   /** Non-negative integer, or the fallback. Guards against corrupt saves. */
@@ -375,6 +376,14 @@
           out.musicOn = p.musicOn === undefined ? true : !!p.musicOn;
           out.art3d = !!p.art3d;
           out.difficulty = DIFFICULTY[p.difficulty] ? p.difficulty : 'standard';
+          const st = (p.stats && typeof p.stats === 'object') ? p.stats : {};
+          out.stats = {
+            hands: safeInt(st.hands, 0, 1e9),
+            busts: safeInt(st.busts, 0, 1e9),
+            best: safeInt(st.best, 0, 40),
+            trumps: safeInt(st.trumps, 0, 1e9),
+            losses: safeInt(st.losses, 0, 1e9)
+          };
           out.dailyBest = {
             date: typeof p.dailyBest === 'object' && p.dailyBest && typeof p.dailyBest.date === 'string'
               ? p.dailyBest.date.slice(0, 10) : '',
@@ -716,6 +725,7 @@
   }
 
   function playTrump(side, id) {
+    if (side.isYou) { save.stats.trumps++; }
     const idx = side.trumps.indexOf(id);
     if (idx === -1) return;
     const def = TRUMPS[id];
@@ -1330,6 +1340,14 @@
     if (loser === S.you && S.you.vessel === 'bride') dmg = Math.max(1, dmg - 1);
 
     loser.vigil = Math.max(0, loser.vigil - dmg);
+
+    // local record, no telemetry: this never leaves the device
+    const st = save.stats;
+    st.hands++;
+    if (isBust(S.you)) st.busts++;
+    if (!isBust(S.you)) st.best = Math.max(st.best, handTotal(S.you));
+    if (winner !== 'you') st.losses++;
+    writeSave();
 
     const bothBust = isBust(S.you) && isBust(S.rival);
     const verb = winner === 'you' ? 'You take' : 'The rival takes';
@@ -1952,6 +1970,13 @@
       $('titleAct').textContent = 'Act ' + currentAct().numeral + (save.cleared ? ' \u2014 cleared' : '');
     }
     if ($('titleBest')) $('titleBest').textContent = save.bestArcade || 0;
+    if ($('statLine')) {
+      const st = save.stats;
+      const bustRate = st.hands ? Math.round((st.busts / st.hands) * 100) : 0;
+      $('statLine').textContent = st.hands
+        ? `${st.hands} hands \u00b7 ${bustRate}% bust \u00b7 best ${st.best || '\u2014'} \u00b7 ${st.trumps} trumps played`
+        : 'No hands played yet.';
+    }
     if ($('titleDaily')) {
       const today = utcDateKey();
       $('titleDaily').textContent = save.dailyBest.date === today

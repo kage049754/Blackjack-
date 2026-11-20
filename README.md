@@ -24,14 +24,20 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.2.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.2.0/TheLastHand-v3.2.0.apk)**
+**[⬇ The Last Hand v3.3.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.3.0/TheLastHand-v3.3.0.apk)**
 
 - 8.9 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
 
-**v3.2.0 finishes the feel pass and adds the modes.**
+**v3.3.0 adds a local record.**
+
+- **Statistics on the title screen** — hands played, bust rate, best hand, trumps
+  played. Counted at the showdown, saved immediately, and **never transmitted**:
+  there is no server to send them to, which is the point.
+
+**v3.2.0 finished the feel pass and added the modes.**
 
 - **Difficulty** — Casual / Standard / Nightmare. Vigil, AI accuracy and cheat
   charges all move; the rules never do, so skill transfers.
