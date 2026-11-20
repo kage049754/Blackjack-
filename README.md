@@ -27,6 +27,7 @@ python3 -m http.server 8000     # or: npm run serve
 **[⬇ The Last Hand v3.0.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.0.0/TheLastHand-v3.0.0.apk)**
 
 - 5.3 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
+- **SHA-256** `4920579eee8ad89e85b31c024b1b0144ffdc931e208d0f5e176819c0757ffcd3`
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
