@@ -1,6 +1,6 @@
 {
   "name": "the-last-hand",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "private": true,
   "description": "A gothic survival duel of twenty-one. Offline-first card game.",
   "license": "SEE LICENSE IN LICENSE",
@@ -14,7 +14,8 @@
     "sync": "npm run build:www && cap sync android",
     "apk:debug": "npm run sync && cd android && ./gradlew assembleDebug",
     "apk:release": "npm run sync && cd android && ./gradlew assembleRelease",
-    "render-score": "node scripts/render-score.js"
+    "render-score": "node scripts/render-score.js",
+    "balance": "node scripts/balance.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.10",

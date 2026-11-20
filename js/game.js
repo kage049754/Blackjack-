@@ -151,7 +151,7 @@
           name: 'The Veiled Dealer',
           line: 'You have never seen its hands in the same place twice.',
           startTrumps: 3,
-          accuracy: 0.96,
+          accuracy: 0.90,
           cheats: 1
         }
       ]
@@ -166,7 +166,7 @@
           name: 'The Charnel Warden',
           line: 'It deals to a lower number and calls it mercy.',
           startTrumps: 1,
-          accuracy: 0.72,
+          accuracy: 0.93,
           targetShift: -2,
           cheats: 0
         },
@@ -175,7 +175,7 @@
           name: 'The Twins',
           line: 'Two of them. They deal you a third card before you have chosen.',
           startTrumps: 2,
-          accuracy: 0.82,
+          accuracy: 0.90,
           extraCard: true,
           cheats: 0
         },
@@ -184,7 +184,7 @@
           name: 'The Candle-Eater',
           line: 'It eats what you are carrying, and it is always hungry.',
           startTrumps: 2,
-          accuracy: 0.90,
+          accuracy: 0.96,
           drain: 0.5,
           cheats: 0
         }
@@ -200,7 +200,7 @@
           name: 'The Hollow Choir',
           line: 'Every mouth is open. None of them are singing to you.',
           startTrumps: 3,
-          accuracy: 0.92,
+          accuracy: 0.97,
           drain: 0.35,
           cheats: 0
         },
@@ -209,7 +209,7 @@
           name: 'The Bone Surgeon',
           line: 'It measures the table the way it measures a body.',
           startTrumps: 2,
-          accuracy: 0.94,
+          accuracy: 0.975,
           targetShift: -3,
           cheats: 0
         },

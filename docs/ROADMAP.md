@@ -2,7 +2,7 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.3.0 — M2 complete. Difficulty modes, the daily seeded run, colour-blind-safe
+**Status: v3.4.0 — M2 complete, difficulty tuned from simulation data. Difficulty modes, the daily seeded run, colour-blind-safe
 damage cues, a cheat set-piece, and candlelight that answers your Vigil. Three acts and nine opponents, an
 arcade mode, thirteen vector characters, a generative score, offline APK shipping.**
 Target: **v2.0 — Steam + Android release** with real-time PvP.
@@ -313,9 +313,36 @@ fifth), colour-blind-safe damage cues, difficulty modes, and the daily seeded ru
 
 Next, in order:
 
-1. **Balance harness** — headless simulator, 500 duels per opponent, to set `accuracy`
-   from data instead of judgement. *(M)*
-2. **P2-16 local stat page** — win rate, best hand, trumps used. *(S)*
-3. **P2-15 cosmetics** — card backs and table cloths bought with candles. Never paid
+Completed in v3.3/v3.4: local stat page (P2-16) and the balance harness.
+
+1. **P2-15 cosmetics** — card backs and table cloths bought with candles. Never paid
    power. *(M)*
-4. **M5 signing** — blocked on a keystore secret; see P0-1.
+2. **M5 signing** — blocked on a keystore secret; see P0-1.
+3. **M4 PvP** — blocked on a server.
+
+### Balance evidence (v3.4.0)
+
+`node scripts/balance.js --duels 600` — models the real ruleset (1-11 shoe, two cards,
+hidden hole card, both-bust resolution), uses the shipped `computeWinner` and the
+shipped opponent table. Trumps and the Candle-Eater's drain are excluded on purpose:
+they are player agency, and modelling them would measure the harness rather than the
+opponent.
+
+| Chair | Accuracy | Hero win rate |
+|---|---|---|
+| Pale Croupier | 62% | 82.7% |
+| Mourner | 84% | 71.0% |
+| Veiled Dealer | 90% | 51.5% |
+| Charnel Warden | 93% | 63.3% |
+| Twins | 90% | 51.3% |
+| Candle-Eater | 96% | 55.5% |
+| Hollow Choir | 97% | 57.3% |
+| Bone Surgeon | 97.5% | 53.2% |
+| The Thing | 98% + 2 cheats | 42.8% |
+
+What the first run found: **Act II opened easier than Act I closed** (74% vs 45%), so
+the second act was a reward-free step down. Accuracy was re-tuned twice against this
+table. Each act now opens with a breather and descends; the mean hero win rate is 58.7%.
+
+Honest caveat: the model has no trumps, so a real player who drafts well will do
+better than these numbers. They are a floor, not a prediction.

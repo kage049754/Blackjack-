@@ -24,15 +24,21 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.3.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.3.0/TheLastHand-v3.3.0.apk)**
+**[⬇ The Last Hand v3.4.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.4.0/TheLastHand-v3.4.0.apk)**
 
 - 8.9 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
-- **SHA-256** `2b9ad94e858ee0ac65d33f160a11ae816da2201ca0e78323b8b86ad4288ec362`
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
 
-**v3.3.0 adds a local record.**
+**v3.4.0 — difficulty tuned from data, not judgement.**
+
+`scripts/balance.js` (`npm run balance`) replays hundreds of duels per opponent
+against the real ruleset. The first run found a real pacing fault: Act II opened
+*easier* than Act I closed. Accuracy was re-tuned twice against the table; each act
+now opens with a breather and descends. Mean hero win rate 58.7%, final boss 42.8%.
+
+**v3.3.0 added a local record.**
 
 - **Statistics on the title screen** — hands played, bust rate, best hand, trumps
   played. Counted at the showdown, saved immediately, and **never transmitted**:
