@@ -24,12 +24,34 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.7.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.7.0/TheLastHand-v3.7.0.apk)**
+**[⬇ The Last Hand v3.8.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.8.0/TheLastHand-v3.8.0.apk)**
 
-- 9 249 518 bytes (8.9 MB) · `sha256 d26cba35…d5077` · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
+- 9 250 991 bytes (8.9 MB) · `sha256 39154fea…9ec2` · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
+
+**v3.8.0 — twenty trumps, and eight new ways to cheat death.**
+
+M3's target was a full trump set; the deck now holds twenty. The eight new cards
+each do something the old twelve did not:
+
+- **Read the room** — The Counting House names the three highest cards left in the
+  shoe. The Grave Robber takes the top card, whatever it is: certainty costs less
+  than choice.
+- **Change the terms** — The Toll takes a Vigil from your rival (it cannot kill);
+  The Long Dark cuts their wager to a single flame, so the round is cheap; The
+  Empty Chair makes them stand before they have decided.
+- **Survive** — Borrowed Time gives a Vigil back, never past your maximum. The Vigil
+  Bell halves the next damage you take in the duel, and says the arithmetic out loud
+  when it rings.
+- **Cut both ways** — The Ferryman's Cut returns the last card of *both* hands to the
+  shoe. It saves you from a bust you have not made yet, and takes away the card that
+  was about to win it.
+
+Drafting is gated by duels won, as before: five cards at the first chair, seven more
+at two wins, eight more at five. Every card in the game is reachable, and a test now
+asserts that, because an unreachable trump is a card that does not exist.
 
 **v3.7.0 — watch the hand that killed you.**
 

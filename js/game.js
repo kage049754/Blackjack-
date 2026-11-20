@@ -551,12 +551,24 @@
   }
 
   /** Trump pool unlocked by progression — paid cosmetics never gate power. */
-  function unlockedPool() {
-    const pool = ['seersEye', 'charity', 'graveDebt', 'mirror'];
-    if (save.wins >= 2) pool.push('thieves', 'creed17', 'creed24', 'bloodPrice');
-    if (save.wins >= 5) pool.push('secondBreath', 'ashWard', 'severing', 'guillotine');
+  /**
+   * Which trumps can be drafted, by duels won. Pure so the set can be tested:
+   * every trump in the game must be reachable, or it may as well not exist.
+   */
+  function poolForWins(wins) {
+    const pool = ['seersEye', 'charity', 'graveDebt', 'mirror', 'countingHouse'];
+    if (wins >= 2) {
+      pool.push('thieves', 'creed17', 'creed24', 'bloodPrice',
+        'graveRobber', 'toll', 'longDark');
+    }
+    if (wins >= 5) {
+      pool.push('secondBreath', 'ashWard', 'severing', 'guillotine',
+        'emptyChair', 'ferryman', 'borrowedTime', 'vigilBell');
+    }
     return pool;
   }
+
+  function unlockedPool() { return poolForWins(save.wins || 0); }
 
   /* ---------------------------------------------------------
      3. Trump cards
@@ -682,6 +694,105 @@
       desc: 'Double the damage if you take this round.',
       rarity: 3,
       use(c) { c.doubled = true; say('The blade is raised twice over.'); }
+    },
+
+    /* ---- the second half of the deck (v3.8) ----
+       M3 targets twenty trumps; these eight fill the set without repeating a
+       mechanic: information, tempo, economics, healing and one symmetric cut. */
+
+    countingHouse: {
+      name: 'The Counting House',
+      desc: 'Read the three highest cards left in the shoe.',
+      rarity: 1,
+      use() {
+        if (!S.deck.length) return say('The shoe is empty.');
+        const top = S.deck.slice().sort((a, b) => b - a).slice(0, 3);
+        say('The house keeps a ledger: <em>' + top.join('</em>, <em>')
+          + '</em> still in the shoe.');
+      }
+    },
+
+    graveRobber: {
+      name: 'The Grave Robber',
+      desc: 'Take the top card of the shoe, whatever it is.',
+      rarity: 2,
+      use(c) {
+        if (!S.deck.length) return say('The shoe is empty.');
+        const v = S.deck[0];
+        dealValue(c, v);
+        say('You take what was on top: a <em>' + v + '</em>.');
+      }
+    },
+
+    toll: {
+      name: 'The Toll',
+      desc: 'Your rival pays 1 Vigil, and cannot be killed by it.',
+      rarity: 2,
+      hostile: true,
+      use(c, r) {
+        if (r.vigil <= 1) return say('It has nothing left to pay with.');
+        r.vigil -= 1;
+        say('A bell rings once. ' + nameOf(r) + ' gives up <em>1</em> Vigil.');
+      }
+    },
+
+    longDark: {
+      name: 'The Long Dark',
+      desc: "Your rival's wager drops to 1.",
+      rarity: 2,
+      hostile: true,
+      use(c, r) {
+        r.wager = 1;
+        say('The stakes are cut down to a single flame.');
+      }
+    },
+
+    emptyChair: {
+      name: 'The Empty Chair',
+      desc: 'Your rival stands this round.',
+      rarity: 2,
+      hostile: true,
+      use(c, r) {
+        r.stood = true;
+        say('The chair opposite you is empty. ' + nameOf(r) + ' '
+          + sverb(r, 'stands', 'stand') + ' where ' + sverb(r, 'is', 'are') + '.');
+      }
+    },
+
+    ferryman: {
+      name: "The Ferryman's Cut",
+      desc: 'Both hands return their last card to the shoe.',
+      rarity: 2,
+      use(c, r) {
+        let cut = 0;
+        [c, r].forEach((side) => {
+          if (side.cards.length > 2) {
+            const card = side.cards.pop();
+            S.deck.push(card.v);
+            cut++;
+          }
+        });
+        say(cut ? 'The ferryman takes his coin from both hands.'
+          : 'There was nothing to cut away.');
+      }
+    },
+
+    borrowedTime: {
+      name: 'Borrowed Time',
+      desc: 'Recover 1 Vigil, never past your maximum.',
+      rarity: 3,
+      use(c) {
+        if (c.vigil >= c.maxVigil) return say('There is nothing left to borrow.');
+        c.vigil += 1;
+        say('You borrow an hour. <em>+1</em> Vigil.');
+      }
+    },
+
+    vigilBell: {
+      name: 'The Vigil Bell',
+      desc: 'The next damage you take this duel is halved.',
+      rarity: 3,
+      use(c) { c.brace = true; say('A bell is hung over your side of the table.'); }
     }
   };
 
@@ -702,6 +813,7 @@
       stood: false,
       trumps: [],
       ward: false,
+      brace: false,
       reprieved: false,
       stakeBonus: 0,
       doubled: false,
@@ -768,6 +880,11 @@
       const t = d[i]; d[i] = d[j]; d[j] = t;
     }
     return d;
+  }
+
+  /* The Vigil Bell: half the damage, rounded against you, never zero. */
+  function halveDamage(dmg) {
+    return Math.max(1, Math.ceil(dmg / 2));
   }
 
   /**
@@ -1029,6 +1146,7 @@
     S.you.cards = [];
     S.you.trumps = [];
     S.you.ward = false;
+    S.you.brace = false;
 
     S.rival = makeSide(opp.name, false, {
       maxVigil: opp.vigil || START_VIGIL,
@@ -1485,6 +1603,14 @@
 
   async function rivalTurn() {
     S.phase = 'rivalTurn';
+
+    if (S.rival.stood) {
+      say('The rival has already stood. It does not sit down.');
+      render();
+      await sleep(650);
+      return;
+    }
+
     say('The rival considers the shoe\u2026');
     render();
     await sleep(850);
@@ -1713,6 +1839,15 @@
     // The Hollow Bride wears the wound a little better than most.
     if (loser === S.you && S.you.vessel === 'bride') dmg = Math.max(1, dmg - 1);
 
+    // The Vigil Bell rings once, and takes half of what was coming.
+    let bellNote = '';
+    if (loser.brace) {
+      const before = dmg;
+      dmg = halveDamage(dmg);
+      loser.brace = false;
+      bellNote = ' The Vigil Bell rings: ' + before + ' becomes ' + dmg + '.';
+    }
+
     loser.vigil = Math.max(0, loser.vigil - dmg);
 
     // local record, no telemetry: this never leaves the device
@@ -1729,7 +1864,8 @@
     const verb = winner === 'you' ? 'You take' : 'The rival takes';
     const context = bothBust ? 'Both bust \u2014 the closer hand takes it. ' : '';
     say(`${context}${verb} it, <em>${yt}</em> to <em>${rt}</em>. ` +
-        `<span class="bad">${nameOf(loser)} ${sverb(loser, 'loses', 'lose')} ${dmg} Vigil.</span>`);
+        `<span class="bad">${nameOf(loser)} ${sverb(loser, 'loses', 'lose')} ${dmg} Vigil.</span>` +
+        bellNote);
     sfx.thump();
     showDamage(loser, dmg);
     if (loser === S.you) { sfx.crack(); flashBlood(); }
@@ -2720,7 +2856,9 @@
       TAUNTS: TAUNTS,
       COSMETICS: COSMETICS,
       redealChoice: redealChoice,
-      handLesson: handLesson
+      handLesson: handLesson,
+      halveDamage: halveDamage,
+      poolForWins: poolForWins
     };
   }
 

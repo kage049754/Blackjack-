@@ -2,7 +2,7 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.7.0 — replay of the duel you lost, boss voices, a defeat screen that teaches, two cheat kinds, cosmetics,
+**Status: v3.8.0 — a full twenty-card trump set, replay of the duel you lost, boss voices, a defeat screen that teaches, two cheat kinds, cosmetics,
 difficulty tuned from simulation data. Difficulty modes, the daily
 seeded run, colour-blind-safe damage cues, a cheat set-piece, candlelight that answers your Vigil, and a candle-priced
 cosmetics shop (card backs, table cloths). Three acts and nine opponents, an arcade mode, thirteen vector characters,
@@ -92,7 +92,7 @@ Each milestone has a **gate**. Do not start the next one until the gate passes.
 **Goal:** reasons to come back tomorrow.
 - Act II: 5-challenger survival (RE7 "Survival" analogue)
 - Act III: endless gauntlet with escalating stakes
-- Full trump set (target 20 cards), trump *deck-building* between acts
+- **Full trump set: 20 cards ✅ (v3.8)** — eight added; every card reachable through `poolForWins()`, asserted by test. Trump *deck-building* between acts: done in v1.2.
 - Cosmetics: card backs, table cloths, candle colours (candles currency)
 - **Gate:** 40% of players who finish Act I start Act II.
 

@@ -14,7 +14,7 @@ const game = require(path.resolve(__dirname, '..', 'js', 'game.js'));
 
 const { computeWinner, totalOf, TRUMPS, VESSELS, ACT_I, ACTS, rollDraft, MAX_COPIES,
         BASE_LOADOUT, arcadePool, arcadeScaled, DIFFICULTY, reseed, rnd, seedFrom,
-        TAUNTS, COSMETICS, redealChoice, handLesson } = game;
+        TAUNTS, COSMETICS, redealChoice, handLesson, halveDamage, poolForWins } = game;
 
 let passed = 0;
 let failed = 0;
@@ -74,7 +74,7 @@ check('deck of 11 sums to 66', totalOf(Array.from({ length: 11 }, (_, i) => ({ v
 section('Content integrity');
 
 const trumpIds = Object.keys(TRUMPS);
-check('12 trump cards defined', trumpIds.length, 12);
+check('20 trump cards defined', trumpIds.length, 20);
 
 let badTrump = null;
 for (const id of trumpIds) {
@@ -85,7 +85,7 @@ for (const id of trumpIds) {
 check('every trump has name, desc, use(), valid rarity', badTrump, null);
 
 const legendaries = trumpIds.filter((id) => TRUMPS[id].rarity === 3);
-check('4 legendary trumps', legendaries.length, 4);
+check('6 legendary trumps', legendaries.length, 6);
 check('Ash Ward is countered by The Severing',
   TRUMPS.severing.piercesWard === true, true);
 
@@ -293,6 +293,21 @@ check('both cheat kinds are actually used in the campaign',
   KINDS.every((k) => allOpps.some((o) => (o.cheats || 0) > 0 && (o.cheatKind || 'replace') === k)), true);
 check('the Warden is the redeal chair',
   allOpps.filter((o) => (o.cheatKind || 'replace') === 'redeal').map((o) => o.id).join(','), 'charnel');
+
+/* ---------- v3.8: the second half of the trump deck ---------- */
+check('every trump in the game can be drafted at 5 wins',
+  trumpIds.every((id) => poolForWins(5).indexOf(id) >= 0), true);
+check('a new player can draft five trumps, and only common ones',
+  poolForWins(0).length + ':' + poolForWins(0).every((id) => TRUMPS[id].rarity <= 2), '5:true');
+check('the pool never lists a trump that does not exist',
+  poolForWins(9).every((id) => !!TRUMPS[id]), true);
+check('the pool never lists a trump twice',
+  new Set(poolForWins(9)).size, poolForWins(9).length);
+
+check('the Vigil Bell halves damage, rounded against you', halveDamage(5), 3);
+check('the Vigil Bell never zeroes a hit', halveDamage(1), 1);
+check('the Vigil Bell cannot make damage out of nothing', halveDamage(0), 1);
+check('the Vigil Bell leaves even damage even', halveDamage(4), 2);
 
 /* ---------- the defeat screen teaches ---------- */
 check('a bust says what standing would have done',
