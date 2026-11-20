@@ -53,6 +53,9 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Validate Android resources
+        run: python3 scripts/check-android-res.py
+
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
