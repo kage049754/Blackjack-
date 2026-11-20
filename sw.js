@@ -4,7 +4,7 @@
    Bump CACHE_VERSION to ship an update.
    ============================================================ */
 
-const CACHE_VERSION = 'last-hand-v11';
+const CACHE_VERSION = 'last-hand-v12';
 
 const PRECACHE = [
   './',

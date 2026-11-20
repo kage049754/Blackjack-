@@ -24,12 +24,20 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.4.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.4.0/TheLastHand-v3.4.0.apk)**
+**[⬇ The Last Hand v3.5.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.5.0/TheLastHand-v3.5.0.apk)**
 
 - 8.9 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
+
+**v3.5.0 — a crypt you can furnish.**
+
+Candles you earn buy visible things: three card backs (classic, bone, blood) and
+three table cloths (crypt, ash, wine). Bought once, kept forever, re-equipped free —
+the purchase is written to the save and re-applied at boot, so the table you left is
+the table you return to. Cosmetics are never paid power: nothing here changes a card,
+a wager, or a Vigil. The hidden hole card wears your back the moment it is dealt.
 
 **v3.4.0 — difficulty tuned from data, not judgement.**
 

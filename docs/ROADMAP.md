@@ -2,9 +2,10 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.4.0 — M2 complete, difficulty tuned from simulation data. Difficulty modes, the daily seeded run, colour-blind-safe
-damage cues, a cheat set-piece, and candlelight that answers your Vigil. Three acts and nine opponents, an
-arcade mode, thirteen vector characters, a generative score, offline APK shipping.**
+**Status: v3.5.0 — M2 complete, cosmetics shipped, difficulty tuned from simulation data. Difficulty modes, the daily
+seeded run, colour-blind-safe damage cues, a cheat set-piece, candlelight that answers your Vigil, and a candle-priced
+cosmetics shop (card backs, table cloths). Three acts and nine opponents, an arcade mode, thirteen vector characters,
+a generative score, offline APK shipping.**
 Target: **v2.0 — Steam + Android release** with real-time PvP.
 
 ---
@@ -315,8 +316,15 @@ Next, in order:
 
 Completed in v3.3/v3.4: local stat page (P2-16) and the balance harness.
 
-1. **P2-15 cosmetics** — card backs and table cloths bought with candles. Never paid
-   power. *(M)*
+1. ~~**P2-15 cosmetics**~~ ✅ **shipped in v3.5.0.** Three card backs (classic 0 /
+   bone 60 / blood 120 candles) and three table cloths (crypt 0 / ash 80 / wine 160).
+   `buyOrEquip()` charges once, records `group:id` in `save.owned`, and re-equipping is
+   free; `applyCosmetics()` writes `data-back` / `data-cloth` onto `<body>` and runs at
+   boot, so the look survives a relaunch. Purely visual — no rule, wager or Vigil is
+   touched. Verified in a jsdom harness: buy bone (500→440), buy blood (→320), re-equip
+   the owned bone (candles unchanged at 320), buy wine (→160), save persisted
+   `{back:"bone", cloth:"wine"}`, owned `["back:bone","back:blood","cloth:wine"]`, boot
+   re-applied both, zero console errors. *(M)*
 2. **M5 signing** — blocked on a keystore secret; see P0-1.
 3. **M4 PvP** — blocked on a server.
 

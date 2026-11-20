@@ -1247,3 +1247,65 @@ body.reduce-motion.cheat-slow .table{ filter: saturate(.4) brightness(.8); trans
   font-family: var(--serif); font-size: .62rem; letter-spacing: .14em;
   text-transform: uppercase; color: var(--bone-faint);
 }
+
+/* ============================================================
+   Cosmetics — bought with candles, worth nothing but taste
+   ============================================================ */
+
+.cosmetics{ margin-top: .9rem; display: flex; flex-direction: column; gap: .45rem; }
+.cosmetic-row{ display: flex; align-items: center; gap: .6rem; justify-content: center; }
+.cosmetic-label{
+  font-family: var(--serif); font-size: .55rem; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--bone-faint); min-width: 5.2rem; text-align: right;
+}
+.swatches{ display: flex; gap: .35rem; }
+.swatch{
+  display: flex; align-items: center; gap: .35rem; cursor: pointer;
+  padding: .25rem .45rem; border-radius: 2px;
+  background: transparent; border: 1px solid rgba(176,141,79,.22);
+  color: var(--bone-faint); font-family: var(--serif); font-size: .5rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.swatch:hover{ color: var(--bone); border-color: rgba(176,141,79,.55); }
+.swatch.on{ border-color: var(--gold); color: var(--amber); background: rgba(232,176,99,.08); }
+.swatch-chip{ width: 16px; height: 22px; border-radius: 2px; display: block; }
+.swatch-cost{ opacity: .65; }
+
+/* card backs */
+.swatch-chip[data-chip="back-classic"]{
+  background:
+    repeating-linear-gradient(45deg, rgba(232,176,99,.16) 0 2px, transparent 2px 4px),
+    linear-gradient(160deg, #1a1720, #0b0a10 70%);
+}
+body[data-back="bone"] .card.back{
+  background-image:
+    repeating-linear-gradient(45deg, rgba(20,18,16,.18) 0 3px, transparent 3px 7px),
+    linear-gradient(160deg, #efe7d4, #cfc3a6 72%);
+}
+.swatch-chip[data-chip="back-bone"]{ background: linear-gradient(160deg, #efe7d4, #cfc3a6 72%); }
+
+body[data-back="blood"] .card.back{
+  background-image:
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.22) 0 3px, transparent 3px 7px),
+    radial-gradient(60% 60% at 50% 50%, #8e1b18, #3a0c0b 78%);
+}
+.swatch-chip[data-chip="back-blood"]{ background: radial-gradient(60% 60% at 50% 50%, #8e1b18, #3a0c0b 78%); }
+
+/* table felts */
+.swatch-chip[data-chip="cloth-crypt"]{ background: linear-gradient(160deg, #12100f, #07070a); }
+.swatch-chip[data-chip="cloth-ash"]{ background: linear-gradient(160deg, #23252a, #0b0c10); }
+.swatch-chip[data-chip="cloth-wine"]{ background: linear-gradient(160deg, #2a1416, #0a0608); }
+
+body[data-cloth="ash"] .candlelight{
+  background:
+    radial-gradient(60% 45% at 50% 42%, rgba(210,222,230,.12), transparent 70%),
+    radial-gradient(90% 70% at 50% 30%, rgba(124,139,149,.12), transparent 75%),
+    radial-gradient(120% 100% at 50% 50%, #16181c 0%, #0c0d10 55%, #06070a 100%);
+}
+body[data-cloth="wine"] .candlelight{
+  background:
+    radial-gradient(60% 45% at 50% 42%, rgba(232,176,99,.14), transparent 70%),
+    radial-gradient(90% 70% at 50% 30%, rgba(142,27,24,.24), transparent 75%),
+    radial-gradient(120% 100% at 50% 50%, #1a0d0e 0%, #100708 55%, #060304 100%);
+}

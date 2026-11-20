@@ -116,6 +116,56 @@
                  note: 'Two fewer Vigil. Everyone cheats more.' }
   };
 
+  /* Cosmetics are bought with candles and grant nothing but a look. */
+  const COSMETICS = {
+    back: [
+      { id: 'classic', name: 'Crypt',  cost: 0 },
+      { id: 'bone',    name: 'Bone',   cost: 60 },
+      { id: 'blood',   name: 'Blood',  cost: 120 }
+    ],
+    cloth: [
+      { id: 'crypt', name: 'Crypt', cost: 0 },
+      { id: 'ash',   name: 'Ash',   cost: 80 },
+      { id: 'wine',  name: 'Wine',  cost: 160 }
+    ]
+  };
+
+  function ownsCosmetic(group, id) {
+    const def = COSMETICS[group].find((c) => c.id === id);
+    if (!def) return false;
+    return def.cost === 0 || (save.owned || []).indexOf(group + ':' + id) !== -1;
+  }
+
+  function applyCosmetics() {
+    document.body.dataset.back = save.cosmetics.back || 'classic';
+    document.body.dataset.cloth = save.cosmetics.cloth || 'crypt';
+  }
+
+  function buyOrEquip(group, id) {
+    const def = COSMETICS[group].find((c) => c.id === id);
+    if (!def) return;
+    if (ownsCosmetic(group, id)) {
+      save.cosmetics[group] = id;
+      writeSave();
+      applyCosmetics();
+      sfx.chime();
+      return;
+    }
+    if (save.candles < def.cost) {
+      say('Not enough candles for ' + def.name + '.');
+      render();
+      sfx.sting();
+      return;
+    }
+    save.candles -= def.cost;
+    save.owned = (save.owned || []).concat([group + ':' + id]);
+    save.cosmetics[group] = id;
+    writeSave();
+    applyCosmetics();
+    renderTitle();
+    sfx.chime();
+  }
+
   function difficulty() {
     return DIFFICULTY[save.difficulty] || DIFFICULTY.standard;
   }
@@ -350,7 +400,8 @@
              seenIntro: false, reduceMotion: false, musicOn: true,
              art3d: false, act: 0, cleared: false, bestArcade: 0,
              difficulty: 'standard', dailyBest: { date: '', streak: 0 },
-             stats: { hands: 0, busts: 0, best: 0, trumps: 0, losses: 0 } };
+             stats: { hands: 0, busts: 0, best: 0, trumps: 0, losses: 0 },
+             cosmetics: { back: 'classic', cloth: 'crypt' }, owned: [] };
   }
 
   /** Non-negative integer, or the fallback. Guards against corrupt saves. */
@@ -376,6 +427,15 @@
           out.musicOn = p.musicOn === undefined ? true : !!p.musicOn;
           out.art3d = !!p.art3d;
           out.difficulty = DIFFICULTY[p.difficulty] ? p.difficulty : 'standard';
+          out.cosmetics = {
+            back: ['classic', 'bone', 'blood'].indexOf(p.cosmetics && p.cosmetics.back) !== -1
+              ? p.cosmetics.back : 'classic',
+            cloth: ['crypt', 'ash', 'wine'].indexOf(p.cosmetics && p.cosmetics.cloth) !== -1
+              ? p.cosmetics.cloth : 'crypt'
+          };
+          out.owned = Array.isArray(p.owned)
+            ? p.owned.filter((x) => typeof x === 'string').slice(0, 40) : [];
+
           const st = (p.stats && typeof p.stats === 'object') ? p.stats : {};
           out.stats = {
             hands: safeInt(st.hands, 0, 1e9),
@@ -1961,6 +2021,26 @@
 
   function hideTitle() { $('titleScreen').hidden = true; }
 
+  function paintCosmetics() {
+    ['back', 'cloth'].forEach((group) => {
+      const host = $('cosmetic' + group.charAt(0).toUpperCase() + group.slice(1));
+      if (!host) return;
+      host.innerHTML = '';
+      COSMETICS[group].forEach((c) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'swatch' + (save.cosmetics[group] === c.id ? ' on' : '');
+        b.dataset.group = group;
+        b.dataset.id = c.id;
+        b.innerHTML = '<span class="swatch-chip" data-chip="' + group + '-' + c.id + '"></span>' +
+          '<span class="swatch-name">' + c.name + '</span>' +
+          '<span class="swatch-cost">' + (ownsCosmetic(group, c.id) ? 'owned' : c.cost + ' candles') + '</span>';
+        b.addEventListener('click', () => buyOrEquip(group, c.id));
+        host.appendChild(b);
+      });
+    });
+  }
+
   function renderTitle() {
     const rankEl = $('titleRank');
     if (rankEl) rankEl.textContent = rankFor(save.wins).name;
@@ -1970,6 +2050,8 @@
       $('titleAct').textContent = 'Act ' + currentAct().numeral + (save.cleared ? ' \u2014 cleared' : '');
     }
     if ($('titleBest')) $('titleBest').textContent = save.bestArcade || 0;
+    paintCosmetics();
+
     if ($('statLine')) {
       const st = save.stats;
       const bustRate = st.hands ? Math.round((st.busts / st.hands) * 100) : 0;
@@ -2122,6 +2204,14 @@
         save.musicOn = save.musicOn === false;
         writeSave();
         paintMusicBtn();
+        if (window.BGM) {
+          BGM.setEnabled(save.musicOn !== false);
+          if (save.musicOn !== false) BGM.start(S.phase === 'title' ? 'title' : 'duel');
+        }
+      });
+    }
+    paintMusicBtn();
+    applyCosmetics();
 
     // ---- portrait style ----------------------------------------
     const artBtn = $('artBtn');
@@ -2146,15 +2236,6 @@
         paintPortraits();
       });
     }
-    paintArtBtn();
-        if (window.BGM) {
-          BGM.setEnabled(save.musicOn !== false);
-          if (save.musicOn !== false) BGM.start(S.phase === 'title' ? 'title' : 'duel');
-        }
-      });
-    }
-    paintMusicBtn();
-
     // ---- dust in the candlelight -------------------------------
     const dust = $('dust');
     if (dust && !dust.childElementCount) {
