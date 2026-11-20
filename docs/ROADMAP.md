@@ -2,7 +2,8 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v1.2.0 — Act I with trump drafting, difficulty curve, offline APK shipping.**
+**Status: v2.0.0 — Act I with drafting, seven vector characters, a generative score,
+full sound design, offline APK shipping.**
 Target: **v2.0 — Steam + Android release** with real-time PvP.
 
 ---

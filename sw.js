@@ -4,7 +4,7 @@
    Bump CACHE_VERSION to ship an update.
    ============================================================ */
 
-const CACHE_VERSION = 'last-hand-v3';
+const CACHE_VERSION = 'last-hand-v4';
 
 const PRECACHE = [
   './',
@@ -12,6 +12,8 @@ const PRECACHE = [
   './manifest.webmanifest',
   './css/style.css',
   './js/game.js',
+  './js/art.js',
+  './js/bgm.js',
   './assets/fonts/cinzel-400.woff2',
   './assets/fonts/cinzel-600.woff2',
   './assets/fonts/cinzel-700.woff2',

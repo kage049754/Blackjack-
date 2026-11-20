@@ -24,15 +24,32 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v1.2.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v1.2.0/TheLastHand-v1.2.0.apk)**
+**[⬇ The Last Hand v2.0.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v2.0.0/TheLastHand-v2.0.0.apk)**
 
-- 5.1 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
-- **SHA-256** `cd1d53147a3dedb3cb63f16b188f1711c062f626e861eec92f48bddfbf87c877`
+- 5.2 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
 
-**v1.2.0 adds:** **trump drafting** — after each won duel, pick 1 of 3 cards and build
+**v2.0.0 adds: characters, art and a full score.**
+
+- **Seven characters, drawn in code.** Every Vessel and every opponent has a
+  hand-built vector portrait — veil, bandage, top hat, porcelain cracks — with rim
+  lighting, breathing motion, and a frame that turns red when they are dying.
+  No image files, no licences, ~3.5 KB each.
+- **A generative score** (`js/bgm.js`). Five synth layers — a detuned drone, a
+  filtered pad, inharmonic bells, a sparse melody in D phrygian dominant, and a
+  heartbeat that only starts when your Vigil is low. It never loops, because it is
+  composed bar by bar. It ducks for the draft and stops dead on a killing blow.
+- **Twelve sound effects** synthesised at runtime: cards leaving the shoe, cards
+  turning, chips, the crypt bell on a death, and a deliberately *wrong* chord when
+  the Veiled Dealer cheats.
+- **The crypt.** Stone walls, a vaulted arch, three living candle flames, drifting
+  fog, and 26 dust motes rising through the light.
+- **Blood on the lens** when you take damage, plus screen shake and haptics.
+- **Music toggle**, persisted. Reduced-motion silences the dust, fog and flames.
+
+**v1.2.0 added:** **trump drafting** — after each won duel, pick 1 of 3 cards and build
 the deck your trump hand draws from. Plus a **difficulty curve** (opponents now misplay
 at different rates), **haptics**, a **reduced-motion** mode, save migration, and a loss
 screen that tells you what went wrong.

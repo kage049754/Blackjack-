@@ -27,3 +27,6 @@ android/app/src/main/assets/capacitor.plugins.json
 .DS_Store
 Thumbs.db
 *.log
+
+# ---- local test harness (jsdom) ----
+.tmp/

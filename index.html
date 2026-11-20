@@ -17,8 +17,20 @@
 <body>
 
 <div class="candlelight"></div>
+
+<!-- the room itself: walls, arch, candles, fog, dust -->
+<div class="crypt" aria-hidden="true">
+  <div class="crypt-wall"></div>
+  <div class="crypt-arch"></div>
+  <div class="crypt-candles"><i></i><i></i><i></i></div>
+  <div class="fog fog-a"></div>
+  <div class="fog fog-b"></div>
+  <div class="dust" id="dust"></div>
+</div>
+
 <div class="vignette"></div>
 <div class="grain"></div>
+<div class="blood-flash" id="bloodFlash" aria-hidden="true"></div>
 
 <header class="topbar">
   <div class="brand">
@@ -34,6 +46,7 @@
     <div class="meta-item"><span class="meta-label">Candles</span><span id="candles" class="meta-value">0</span></div>
     <div class="meta-item"><span class="meta-label">Act I</span><span id="actProgress" class="meta-value">1 / 3</span></div>
     <button id="muteBtn" class="ghost-btn" type="button" aria-label="Toggle sound">Sound: On</button>
+    <button id="musicBtn" class="ghost-btn" type="button" aria-label="Toggle music">Music: On</button>
     <button id="motionBtn" class="ghost-btn" type="button" aria-label="Toggle motion">Motion: On</button>
   </div>
 </header>
@@ -43,6 +56,7 @@
   <!-- ============ RIVAL ============ -->
   <section class="side rival" id="rivalSide">
     <div class="side-head">
+      <div class="portrait" id="rivalPortrait" aria-hidden="true"></div>
       <div class="sigil" aria-hidden="true">☠</div>
       <div class="who">
         <h2 id="rivalName">The Veiled Dealer</h2>
@@ -91,6 +105,7 @@
         <span class="score-label">Your hand</span>
         <span class="score" id="youScore">—</span>
       </div>
+      <div class="portrait you-portrait" id="youPortrait" aria-hidden="true"></div>
     </div>
   </section>
 
@@ -147,6 +162,8 @@
 
 <div class="tooltip" id="tooltip" hidden></div>
 
+<script src="js/art.js"></script>
+<script src="js/bgm.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

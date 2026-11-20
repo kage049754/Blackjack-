@@ -874,3 +874,229 @@ body.reduce-motion .shake{ animation: none; }
 @media (prefers-reduced-motion: reduce){
   .grain{ display: none; }
 }
+
+/* ============================================================
+   THE CRYPT — the room itself
+   Drawn entirely in gradients: no image files ship with the game.
+   ============================================================ */
+
+.crypt{
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+
+/* stone wall: block courses, darkened at the edges */
+.crypt-wall{
+  position: absolute; inset: -4%;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,.014) 0 1px, transparent 1px 62px),
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,.55) 0 1px, transparent 1px 108px,
+      rgba(0,0,0,.30) 54px, transparent 54px 108px),
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,.42) 0 2px, transparent 2px 62px),
+    radial-gradient(120% 90% at 50% 8%, #17161c 0%, #0c0b10 42%, #06060a 100%);
+  filter: contrast(1.06);
+}
+
+/* a vaulted arch, implied by light rather than drawn */
+.crypt-arch{
+  position: absolute; left: 50%; top: -34vh; transform: translateX(-50%);
+  width: 132vw; height: 96vh;
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    rgba(232,176,99,.055), rgba(142,27,24,.035) 46%, transparent 72%);
+  box-shadow:
+    inset 0 0 120px 40px rgba(0,0,0,.85),
+    inset 0 4px 0 0 rgba(176,141,79,.16),
+    inset 0 10px 40px 0 rgba(232,176,99,.10);
+}
+
+/* three candles, low left and right, with living flames */
+.crypt-candles{ position: absolute; inset: 0; }
+.crypt-candles i{
+  position: absolute; display: block;
+  width: 5px; height: 13px; border-radius: 50% 50% 46% 46%;
+  background: radial-gradient(circle at 50% 72%, #fff6dc 0%, #ffcf7d 38%, #e08a24 70%, transparent 74%);
+  box-shadow: 0 0 26px 10px rgba(255,190,105,.28), 0 0 90px 34px rgba(232,120,40,.13);
+  animation: flame 3.1s ease-in-out infinite;
+}
+.crypt-candles i:nth-child(1){ left: 7%;  top: 26%; animation-delay: -.4s; }
+.crypt-candles i:nth-child(2){ right: 8%; top: 31%; animation-delay: -1.7s; }
+.crypt-candles i:nth-child(3){ left: 50%; top: 4%;  animation-delay: -2.5s; opacity: .5; }
+
+@keyframes flame{
+  0%,100%{ transform: scale(1) translateY(0);      opacity: .95; }
+  25%    { transform: scale(.9,.84) translateY(1px); opacity: .78; }
+  50%    { transform: scale(1.06,1.1) translateY(-1px); opacity: 1; }
+  75%    { transform: scale(.95,.92) translateY(0); opacity: .84; }
+}
+
+/* drifting fog */
+.fog{
+  position: absolute; width: 90vw; height: 60vh; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(180,190,200,.055), transparent 70%);
+  filter: blur(28px);
+}
+.fog-a{ bottom: -22vh; left: -18vw; animation: driftA 46s linear infinite; }
+.fog-b{ top: 8vh; right: -24vw; animation: driftB 61s linear infinite;
+        background: radial-gradient(closest-side, rgba(142,27,24,.05), transparent 70%); }
+
+@keyframes driftA{
+  0%  { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(9vw,-3vh,0) scale(1.12); }
+  100%{ transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes driftB{
+  0%  { transform: translate3d(0,0,0) scale(1.05); }
+  50% { transform: translate3d(-11vw,4vh,0) scale(.95); }
+  100%{ transform: translate3d(0,0,0) scale(1.05); }
+}
+
+/* dust suspended in the candlelight */
+.dust{ position: absolute; inset: 0; }
+.dust i{
+  position: absolute; display: block;
+  width: 2px; height: 2px; border-radius: 50%;
+  background: rgba(232,200,150,.6);
+  box-shadow: 0 0 6px 1px rgba(232,176,99,.30);
+  animation: rise linear infinite;
+}
+@keyframes rise{
+  0%  { transform: translate3d(0,0,0);          opacity: 0; }
+  12% { opacity: .75; }
+  88% { opacity: .55; }
+  100%{ transform: translate3d(14px,-108vh,0);   opacity: 0; }
+}
+
+/* ============================================================
+   PORTRAITS — vector characters, no image files
+   ============================================================ */
+
+.portrait{
+  position: relative;
+  width: 58px; height: 72px; flex: 0 0 auto;
+  border-radius: 50% 50% 44% 44% / 58% 58% 42% 42%;
+  overflow: hidden;
+  background:
+    radial-gradient(70% 60% at 50% 34%, rgba(232,176,99,.12), transparent 72%),
+    linear-gradient(180deg, #12121a, #07070a);
+  border: 1px solid rgba(176,141,79,.42);
+  box-shadow:
+    inset 0 0 18px rgba(0,0,0,.9),
+    0 6px 18px rgba(0,0,0,.65),
+    0 0 0 1px rgba(0,0,0,.6);
+  transition: box-shadow .45s ease, border-color .45s ease, filter .45s ease;
+}
+
+.portrait svg{ width: 100%; height: 100%; display: block; }
+
+/* the figure breathes, very slightly */
+.portrait .breathe{
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: breathe 6.4s ease-in-out infinite;
+}
+@keyframes breathe{
+  0%,100%{ transform: scale(1) translateY(0); }
+  50%    { transform: scale(1.012) translateY(-1px); }
+}
+
+/* a brass hairline inside the frame */
+.portrait::after{
+  content: ''; position: absolute; inset: 3px;
+  border-radius: inherit;
+  border: 1px solid rgba(232,176,99,.16);
+  pointer-events: none;
+}
+
+.you-portrait{ border-color: rgba(232,176,99,.55); }
+
+/* mood states on the frame itself */
+.side.dying .portrait{
+  border-color: rgba(198,41,31,.68);
+  box-shadow: inset 0 0 22px rgba(142,27,24,.65), 0 0 26px rgba(198,41,31,.30);
+  filter: saturate(.55) contrast(1.1);
+  animation: pulse-bad 2.4s ease-in-out infinite;
+}
+.side.winner .portrait{
+  border-color: var(--gold);
+  box-shadow: inset 0 0 16px rgba(232,176,99,.30), 0 0 30px rgba(232,176,99,.32);
+}
+
+/* vessel select: a portrait above the name */
+.vessel-portrait{
+  width: 84px; height: 104px; margin: 0 auto .55rem;
+  border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+}
+.vessel.locked .vessel-portrait{ filter: grayscale(1) brightness(.42); }
+.vessel.chosen .vessel-portrait{
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold), 0 0 26px rgba(232,176,99,.34);
+}
+
+/* ============================================================
+   IMPACT — blood on the lens when you take damage
+   ============================================================ */
+
+.blood-flash{
+  position: fixed; inset: 0; z-index: 30; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(120% 90% at 50% 50%, transparent 34%, rgba(142,27,24,.42) 74%, rgba(90,10,10,.72) 100%);
+}
+.blood-flash.hit{ animation: bloodHit .95s ease-out both; }
+@keyframes bloodHit{
+  0%  { opacity: 0; }
+  12% { opacity: 1; }
+  60% { opacity: .45; }
+  100%{ opacity: 0; }
+}
+
+/* ============================================================
+   richer card faces
+   ============================================================ */
+
+.card{
+  background-image:
+    radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.10), transparent 62%),
+    linear-gradient(160deg, #f3ecda, #ded2b8 62%, #c9bb9d);
+  box-shadow:
+    0 10px 22px rgba(0,0,0,.62),
+    inset 0 0 0 1px rgba(120,100,70,.35),
+    0 1px 0 rgba(255,255,255,.35) inset;
+}
+.card::before{
+  content: '';
+  position: absolute; inset: 4px; border-radius: 4px;
+  border: 1px solid rgba(120,100,70,.22);
+  pointer-events: none;
+}
+.card.back{
+  background-image:
+    repeating-linear-gradient(45deg, rgba(232,176,99,.10) 0 3px, transparent 3px 7px),
+    repeating-linear-gradient(-45deg, rgba(232,176,99,.10) 0 3px, transparent 3px 7px),
+    radial-gradient(60% 60% at 50% 50%, rgba(142,27,24,.40), transparent 72%),
+    linear-gradient(160deg, #1a1720, #0b0a10 70%);
+}
+
+/* ============================================================
+   responsive: portraits shrink before the names do
+   ============================================================ */
+
+@media (max-width: 900px){
+  .portrait{ width: 46px; height: 58px; }
+  .vessel-portrait{ width: 66px; height: 82px; }
+}
+@media (max-width: 620px){
+  .portrait{ width: 38px; height: 48px; }
+  .vessel-portrait{ width: 56px; height: 70px; }
+  .crypt-arch{ top: -40vh; }
+  .fog{ filter: blur(18px); }
+}
+
+/* respect the viewer's motion preference */
+body.reduce-motion .dust,
+body.reduce-motion .fog,
+body.reduce-motion .crypt-candles i,
+body.reduce-motion .portrait .breathe{ animation: none !important; }
+body.reduce-motion .blood-flash.hit{ animation: none !important; opacity: .35; }

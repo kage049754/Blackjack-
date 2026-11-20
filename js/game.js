@@ -168,6 +168,22 @@
       chime()  { tone(660, 0.55, 'triangle', 0.045); tone(990, 0.55, 'triangle', 0.03); },
       sting()  { tone(300, 0.7, 'sawtooth', 0.045, 68); },
       whisper(){ noise(0.35, 900, 0.05); },
+
+      /* a card leaving the shoe and landing on felt */
+      deal()   { noise(0.06, 4200, 0.055); setTimeout(() => noise(0.10, 1500, 0.045), 55); },
+      /* a card turning over */
+      turn()   { noise(0.11, 2600, 0.065); tone(180, 0.18, 'triangle', 0.014, 140); },
+      /* bone china and brass: the wager chips */
+      chips()  { tone(1180, 0.09, 'triangle', 0.03); tone(1620, 0.11, 'triangle', 0.02);
+                 setTimeout(() => tone(930, 0.10, 'triangle', 0.022), 60); },
+      /* the crypt bell, on a death */
+      toll()   { tone(146.8, 2.6, 'sine', 0.085); tone(404.9, 1.8, 'sine', 0.026);
+                 tone(73.4, 3.0, 'sine', 0.05); },
+      /* flesh, promptly */
+      crack()  { tone(88, 0.42, 'sawtooth', 0.055, 38); noise(0.34, 620, 0.10); },
+      /* the rival does something it should not be able to do */
+      wrong()  { tone(320, 1.1, 'sawtooth', 0.04, 96); noise(0.5, 1100, 0.05);
+                 setTimeout(() => tone(240, 0.9, 'square', 0.022, 70), 140); },
       setEnabled(v) {
         enabled = v;
         if (!v) this.stopDrone();
@@ -208,7 +224,8 @@
   let save = loadSave();
 
   function blankSave() {
-    return { version: SAVE_VERSION, wins: 0, duels: 0, candles: 0, seenIntro: false, reduceMotion: false };
+    return { version: SAVE_VERSION, wins: 0, duels: 0, candles: 0,
+             seenIntro: false, reduceMotion: false, musicOn: true };
   }
 
   /** Non-negative integer, or the fallback. Guards against corrupt saves. */
@@ -736,6 +753,7 @@
         btn.addEventListener('click', () => {
           screen.hidden = true;
           sfx.chime();
+          if (window.BGM) BGM.stinger('card');
           haptic(30);
           resolve(id);
         });
@@ -744,6 +762,7 @@
       });
 
       screen.hidden = false;
+      if (window.BGM) { BGM.setMood('draft'); BGM.duck(2600); }
     });
   }
 
@@ -766,14 +785,18 @@
     S.phase = 'over';
     stopTimer();
     sfx.stopDrone();
+    if (window.BGM) BGM.setMood('title');
 
     if (won) {
       save.candles += 25;
       writeSave();
       sfx.chime();
       setTimeout(() => sfx.chime(), 260);
+      if (window.BGM) BGM.stinger('win');
     } else {
       sfx.sting();
+      sfx.toll();
+      if (window.BGM) BGM.stinger('death');
     }
     render();
 
@@ -987,7 +1010,9 @@
 
     say('The dealer\u2019s sleeve moves. The card you were watching was never the card.');
     render();
-    sfx.sting();
+    sfx.wrong();
+    if (window.BGM) { BGM.stinger('cheat'); BGM.duck(1800); }
+    haptic([0, 40, 60, 120]);
     await sleep(1100);
 
     const base = r.cards.reduce((a, c) => a + c.v, 0);
@@ -1031,6 +1056,7 @@
     S.rival.cards.forEach((c) => (c.hidden = false));
 
     say('The hidden cards turn.');
+    sfx.turn();
     render();
     sfx.flick();
     await sleep(900);
@@ -1073,6 +1099,7 @@
     say(`${context}${verb} it, <em>${yt}</em> to <em>${rt}</em>. ` +
         `<span class="bad">${nameOf(loser)} ${sverb(loser, 'loses', 'lose')} ${dmg} Vigil.</span>`);
     sfx.thump();
+    if (loser === S.you) { sfx.crack(); flashBlood(); }
     shakeScreen();
     haptic(winner === 'you' ? [0, 40] : [0, 60, 50, 120]);
     render();
@@ -1167,6 +1194,42 @@
 
   function suitFor(v) { return SUITS[(v - 1) % 4]; }
 
+  /* ---- character art ------------------------------------------- */
+
+  /* Art ids differ from opponent ids only for the last of Act I. */
+  function opponentArtId() {
+    const opp = ACT_I.opponents[S.opponentIndex];
+    if (!opp) return 'veiled';
+    return opp.id === 'dealer' ? 'veiled' : opp.id;
+  }
+
+  function paintPortraits() {
+    if (!window.Art) return;
+
+    const you = $('youPortrait');
+    if (you && you.dataset.art !== S.vesselId) {
+      you.innerHTML = Art.portrait(S.vesselId);
+      you.dataset.art = S.vesselId;
+    }
+
+    const rival = $('rivalPortrait');
+    const rid = opponentArtId();
+    if (rival && rival.dataset.art !== rid) {
+      rival.innerHTML = Art.portrait(rid);
+      rival.dataset.art = rid;
+    }
+  }
+
+  /* ---- impact --------------------------------------------------- */
+
+  function flashBlood() {
+    const el = $('bloodFlash');
+    if (!el) return;
+    el.classList.remove('hit');
+    void el.offsetWidth;
+    el.classList.add('hit');
+  }
+
   function render() {
     const rank = rankFor(save.wins);
     $('rankName').textContent = rank.name;
@@ -1204,6 +1267,14 @@
     log.classList.toggle('bad', /busts|loses/.test(S.message));
 
     renderBlade();
+    paintPortraits();
+
+    // the score leans with your danger
+    const worst = Math.max(S.you.maxVigil - S.you.vigil, S.rival.maxVigil - S.rival.vigil);
+    const total = Math.max(1, S.you.maxVigil + S.rival.maxVigil);
+    if (window.BGM) {
+      BGM.setIntensity(Math.min(1, worst / total + (S.you.vigil <= 2 ? 0.35 : 0)));
+    }
   }
 
   function renderVigil(el, side) {
@@ -1445,6 +1516,7 @@
     hideOverlay();
     renderTitle();
     $('titleScreen').hidden = false;
+    if (window.BGM) BGM.setMood('title');
   }
 
   function hideTitle() { $('titleScreen').hidden = true; }
@@ -1468,6 +1540,13 @@
         + (id === S.vesselId ? ' chosen' : '')
         + (locked ? ' locked' : '');
       el.disabled = locked;
+
+      if (window.Art) {
+        const por = document.createElement('div');
+        por.className = 'portrait vessel-portrait';
+        por.innerHTML = Art.portrait(id);
+        el.appendChild(por);
+      }
 
       const name = document.createElement('span');
       name.className = 'vessel-name';
@@ -1519,6 +1598,7 @@
     writeSave();
 
     sfx.startDrone();
+    if (window.BGM) BGM.start('duel');
     render();
     runGauntlet();
   }
@@ -1568,6 +1648,54 @@
       if (next) sfx.startDrone();
       mute.textContent = 'Sound: ' + (next ? 'On' : 'Off');
     });
+
+    // ---- music -------------------------------------------------
+    const musicBtn = $('musicBtn');
+    function paintMusicBtn() {
+      if (musicBtn) musicBtn.textContent = 'Music: ' + (save.musicOn === false ? 'Off' : 'On');
+    }
+    if (musicBtn) {
+      musicBtn.addEventListener('click', () => {
+        save.musicOn = save.musicOn === false;
+        writeSave();
+        paintMusicBtn();
+        if (window.BGM) {
+          BGM.setEnabled(save.musicOn !== false);
+          if (save.musicOn !== false) BGM.start(S.phase === 'title' ? 'title' : 'duel');
+        }
+      });
+    }
+    paintMusicBtn();
+
+    // ---- dust in the candlelight -------------------------------
+    const dust = $('dust');
+    if (dust && !dust.childElementCount) {
+      for (let i = 0; i < 26; i++) {
+        const mote = document.createElement('i');
+        mote.style.left = (Math.random() * 100).toFixed(1) + '%';
+        mote.style.top = (55 + Math.random() * 55).toFixed(1) + '%';
+        mote.style.width = mote.style.height = (1 + Math.random() * 2).toFixed(1) + 'px';
+        mote.style.animationDuration = (16 + Math.random() * 26).toFixed(1) + 's';
+        mote.style.animationDelay = (-Math.random() * 30).toFixed(1) + 's';
+        mote.style.opacity = (0.2 + Math.random() * 0.6).toFixed(2);
+        dust.appendChild(mote);
+      }
+    }
+
+    // Browsers refuse to start audio without a gesture. The first tap is it.
+    let audioOpened = false;
+    function openAudio() {
+      if (audioOpened) return;
+      audioOpened = true;
+      if (window.BGM) {
+        BGM.unlock();
+        if (save.musicOn !== false) BGM.start(S.phase === 'title' ? 'title' : 'duel');
+      }
+      window.removeEventListener('pointerdown', openAudio);
+      window.removeEventListener('keydown', openAudio);
+    }
+    window.addEventListener('pointerdown', openAudio);
+    window.addEventListener('keydown', openAudio);
 
     // Respect the OS setting on a first run, then let the player override.
     if (!save.seenIntro && window.matchMedia &&

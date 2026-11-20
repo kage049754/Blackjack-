@@ -337,12 +337,66 @@ after losing, the loop needs work before any art budget is spent.
 
 ---
 
-## 12. What's in this repo
+## 12. Characters, art and sound
 
-- `index.html` — the playable prototype (open it, no build step, no dependencies)
-- `css/style.css` — gothic styling
+### 12.1 Portraits are code, not images
+
+`js/art.js` builds every character as inline SVG at runtime: a bust in a 200×250
+frame, a dark halo, a single-source rim light, and one silhouette cue that identifies
+them at 38 px on a phone.
+
+| Character | Cue |
+|---|---|
+| The Widow | lace veil, the ace of spades in a gloved hand |
+| The Gravedigger | hood, stubble, a spade over the shoulder |
+| The Confessor | white bandage across the eyes, a candle burning down |
+| The Hollow Bride | cracked porcelain face, hollow eyes, a dried bouquet |
+| The Pale Croupier | no face at all, top hat, two cards already dealt |
+| The Mourner | hood, a tear track, a black-bordered card |
+| The Veiled Dealer | gilt filigree mask, sealed mouth, red seal |
+
+Why code instead of art files:
+
+- **Weight.** Seven portraits cost ~25 KB total, uncompressed.
+- **Sharpness.** Vector, so there is no @2x/@3x sprite ladder.
+- **Licence clarity.** Nothing to audit; there is no third-party binary in the repo.
+- **Motion.** Each figure *breathes* via a CSS transform on a `<g>`; a frame turns
+  blood-red and desaturates when its owner is one Vigil from death.
+
+Generated gradient and filter ids are suffixed per instance, so several portraits can
+sit in one document without colliding.
+
+### 12.2 The crypt
+
+The room is gradients: stone courses in `repeating-linear-gradient`, a vaulted arch
+implied by a huge inset-shadowed ellipse, three candle flames with independent flicker
+timings, two fog banks drifting on 46 s and 61 s cycles, and 26 dust motes rising on
+randomised durations. Nothing is an image, so the whole room scales to any screen.
+
+Damage fires a radial blood vignette over the lens plus a screen shake and a haptic
+pattern. All of it is disabled by the reduced-motion switch.
+
+### 12.3 The score
+
+`js/bgm.js` is a generative composer, not a loop. A bar is scheduled, then the next is
+scheduled from the same rules, so the music never audibly repeats.
+
+- **Harmony** — D phrygian dominant. The flat second is the entire mood.
+- **Layers** — detuned drone; detuned-saw pad through a sweeping lowpass; inharmonic
+  bell (2.76 ratio, i.e. struck metal, not a violin); sparse melody; heartbeat.
+- **Space** — a 2.6 s impulse response generated from decaying noise, fed by a send.
+- **Reactivity** — intensity rises with lost Vigil; the heartbeat only starts below
+  about half; the mix ducks for the draft; the boss cheat plays a wrong chord.
+- **Cost** — 12 KB of JavaScript, zero audio files.
+
+### 12.4 What's in this repo
+
+- `index.html` — the playable game (open it, no build step, no dependencies)
+- `css/style.css` — gothic styling, the crypt, card faces
 - `js/game.js` — the entire ruleset, AI, and progression
+- `js/art.js` — seven vector character portraits
+- `js/bgm.js` — the generative score and stingers
 - `docs/GAME-DESIGN.md` — this document
 
-The prototype implements **everything in §6 and §7** so the rules can be felt rather
+The game implements **everything in §6, §7 and §12** so the rules can be felt rather
 than argued about.
