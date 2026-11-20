@@ -2,8 +2,8 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v3.6.0 — boss voices, a defeat screen that teaches, two cheat kinds, cosmetics, difficulty tuned from
-simulation data. Difficulty modes, the daily
+**Status: v3.7.0 — replay of the duel you lost, boss voices, a defeat screen that teaches, two cheat kinds, cosmetics,
+difficulty tuned from simulation data. Difficulty modes, the daily
 seeded run, colour-blind-safe damage cues, a cheat set-piece, candlelight that answers your Vigil, and a candle-priced
 cosmetics shop (card backs, table cloths). Three acts and nine opponents, an arcade mode, thirteen vector characters,
 a generative score, offline APK shipping.**
@@ -151,7 +151,7 @@ Size: **S** ≤ 1 day · **M** ≈ 2–3 days · **L** ≈ 1 week · **XL** > 1 
 | 14 | Endless gauntlet + leaderboard | L |
 | 15 | Cosmetics shop (candles only, never paid power) | M |
 | 16 | ~~Local stat page~~ ✅ **shipped v3.3** | S | Hands, bust rate, best hand, trumps; device-local only |
-| 17 | Spectator/replay of a lost duel | L |
+| 17 | ~~Spectator/replay of a lost duel~~ ✅ **shipped v3.7** | L | `tapeFrame()` records each hand; "Watch it again" replays the duel on the real table with a Skip in the rail |
 
 ### P3 — multiplayer
 

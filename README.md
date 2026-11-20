@@ -24,12 +24,23 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v3.6.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.6.0/TheLastHand-v3.6.0.apk)**
+**[⬇ The Last Hand v3.7.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.7.0/TheLastHand-v3.7.0.apk)**
 
 - 9 249 518 bytes (8.9 MB) · `sha256 d26cba35…d5077` · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
+
+**v3.7.0 — watch the hand that killed you.**
+
+The defeat screen now offers **Watch it again**: the duel you just lost plays back on
+the same table, round by round — your wagers, the cards as they lay, the moment the
+dealer's sleeve moved, the totals that ended it. It is a recap of hands, not a
+recording of your inputs: there is nothing to imitate, only something to see. Skip
+takes you straight back. Works from the campaign and from arcade.
+
+Under it, `tapeFrame()` records each hand as it resolves, so the replay cannot drift
+from what actually happened — it is the same numbers the defeat lesson reads.
 
 **v3.6.0 — the chairs have voices, and the table tells you why you died.**
 

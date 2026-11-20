@@ -734,7 +734,9 @@
     draftOptions: [],
     lastRound: null,
     taunt: '',
-    tauntBeat: ''
+    tauntBeat: '',
+    tape: [],
+    cheatThisRound: null
   };
 
   /** The trump deck you start an act with. Deepens via the draft. */
@@ -779,6 +781,28 @@
       return t > target ? -t : t;
     };
     return score(fresh) > score(before) ? 'fresh' : 'before';
+  }
+
+  /* ---------------------------------------------------------
+     The tape — a record of each hand, so the defeat screen can play
+     the duel back. It stores hands, not input frames: this is a
+     "watch what happened", not a simulation of the player.
+     --------------------------------------------------------- */
+  function tapeFrame(winner, dmg) {
+    if (!S.tape) return;
+    S.tape.push({
+      round: S.round,
+      target: S.target,
+      you: S.you.cards.map((c) => ({ v: c.v, hidden: !!c.hidden })),
+      rival: S.rival.cards.map((c) => ({ v: c.v, hidden: !!c.hidden })),
+      yt: handTotal(S.you),
+      rt: handTotal(S.rival),
+      wagerYou: S.you.wager,
+      wagerRival: S.rival.wager,
+      winner: winner,
+      dmg: dmg || 0,
+      cheat: S.cheatThisRound || null
+    });
   }
 
   /**
@@ -1001,6 +1025,7 @@
     const opp = S.opponent || currentAct().opponents[S.opponentIndex];
 
     S.round = 0;
+    S.tape = [];
     S.you.cards = [];
     S.you.trumps = [];
     S.you.ward = false;
@@ -1171,6 +1196,71 @@
     ], 'win');
   }
 
+  /* ---------------------------------------------------------
+     Replay: play the recorded duel back on the table. No input, no
+     consequences — the point is to see the hand that killed you.
+     --------------------------------------------------------- */
+  async function playTape(onDone) {
+    const tape = (S.tape || []).slice();
+    if (!tape.length) { if (onDone) onDone(); return; }
+
+    hideOverlay();
+    S.phase = 'replay';
+    S.skipReplay = false;
+    document.body.classList.add('replaying');
+
+    const wait = async (ms) => {
+      for (let t = 0; t < ms && !S.skipReplay; t += 60) await sleep(60);
+    };
+    const skipping = () => S.skipReplay;
+
+    for (const rec of tape) {
+      if (skipping()) break;
+      S.round = rec.round;
+      S.target = rec.target;
+      S.you.cards = rec.you.map((c) => ({ v: c.v, hidden: c.hidden }));
+      S.rival.cards = rec.rival.map((c) => ({ v: c.v, hidden: c.hidden }));
+      S.message = 'Round ' + rec.round + '. You wager ' + rec.wagerYou
+        + ', they wager ' + rec.wagerRival + '.';
+      render();
+      await wait(1000);
+      if (skipping()) break;
+
+      if (rec.cheat) {
+        S.message = rec.cheat === 'redeal'
+          ? 'The Warden takes its hand back off the table and deals itself another.'
+          : 'The dealer\u2019s sleeve moves.';
+        render();
+        sfx.wrong();
+        await wait(1150);
+        if (skipping()) break;
+      }
+
+      S.you.cards.forEach((c) => { c.hidden = false; });
+      S.rival.cards.forEach((c) => { c.hidden = false; });
+      const outcome = !rec.winner
+        ? 'A tie. The blade does not move.'
+        : rec.winner === 'you'
+          ? 'You take it.'
+          : 'They take it. You lose ' + rec.dmg + ' Vigil.';
+      S.message = '<em>' + rec.yt + '</em> against <em>' + rec.rt + '</em>. ' + outcome;
+      render();
+      sfx.turn();
+      await wait(1600);
+    }
+
+    if (!skipping()) {
+      S.message = 'That is how it went. The table does not remember it.';
+      render();
+      await wait(1100);
+    }
+
+    document.body.classList.remove('replaying');
+    S.skipReplay = false;
+    S.phase = 'over';
+    if (onDone) onDone();
+  }
+
   async function endAct(won) {
     S.phase = 'over';
     stopTimer();
@@ -1230,14 +1320,25 @@
     const why = defeatTeaching();
     if (why) body += ' ' + why;
 
-    showOverlay('The Blade Finds You', body, [{
+    const buttons = [{
       label: 'Rise Again',
       cls: 'primary',
       onClick: () => { hideOverlay(); startAct(); }
-    }, {
+    }];
+
+    if (S.tape && S.tape.length) {
+      buttons.push({
+        label: 'Watch it again',
+        onClick: () => { hideOverlay(); playTape(() => endAct(false)); }
+      });
+    }
+
+    buttons.push({
       label: 'Return to the Crypt',
       onClick: () => { hideOverlay(); showTitle(); }
-    }], 'lose');
+    });
+
+    showOverlay('The Blade Finds You', body, buttons, 'lose');
   }
 
   async function runRound() {
@@ -1246,6 +1347,7 @@
     S.target = DEFAULT_TARGET;
 
     // Some opponents deal to a different number, and say so.
+    S.cheatThisRound = null;
     const opp = S.opponent || {};
     if (opp.targetShift) {
       S.target = Math.max(12, DEFAULT_TARGET + opp.targetShift);
@@ -1465,6 +1567,7 @@
   async function playRedeal() {
     const r = S.rival;
     const target = S.target;
+    S.cheatThisRound = 'redeal';
 
     say('The Warden lifts its cards off the table and puts them back in the shoe. '
       + 'It deals itself again.');
@@ -1516,6 +1619,7 @@
   async function playCheat() {
     const r = S.rival;
     const kind = r.cheatKind || 'replace';
+    S.cheatThisRound = kind;
 
     await cheatSetPiece();
     r.cheatUsed = true;
@@ -1589,6 +1693,7 @@
     };
 
     if (!winner) {
+      tapeFrame(null, 0);
       say(`Both hands at <em>${yt}</em> and <em>${rt}</em>. The blade does not move.`);
       sfx.chime();
       render();
@@ -1617,6 +1722,8 @@
     if (!isBust(S.you)) st.best = Math.max(st.best, handTotal(S.you));
     if (winner !== 'you') st.losses++;
     writeSave();
+
+    tapeFrame(winner, dmg);
 
     const bothBust = isBust(S.you) && isBust(S.rival);
     const verb = winner === 'you' ? 'You take' : 'The rival takes';
@@ -1772,14 +1879,26 @@
           + ' before the blade found you. Best run: ' + best + '.\n\n'
           + 'Candles: ' + save.candles + '.')
         + (defeatTeaching() ? '\n\n' + defeatTeaching() : ''),
-      [{
-        label: 'Deal Again',
-        cls: 'primary',
-        onClick: () => { hideOverlay(); startArcade(); }
-      }, {
-        label: 'Return to the Crypt',
-        onClick: () => { hideOverlay(); showTitle(); }
-      }],
+      (S.tape && S.tape.length
+        ? [{
+          label: 'Deal Again',
+          cls: 'primary',
+          onClick: () => { hideOverlay(); startArcade(); }
+        }, {
+          label: 'Watch it again',
+          onClick: () => { hideOverlay(); playTape(() => endArcade()); }
+        }, {
+          label: 'Return to the Crypt',
+          onClick: () => { hideOverlay(); showTitle(); }
+        }]
+        : [{
+          label: 'Deal Again',
+          cls: 'primary',
+          onClick: () => { hideOverlay(); startArcade(); }
+        }, {
+          label: 'Return to the Crypt',
+          onClick: () => { hideOverlay(); showTitle(); }
+        }]),
       'lose'
     );
   }
@@ -2116,6 +2235,18 @@
     const el = $('actionRail');
     if (!el) return;
     el.innerHTML = '';
+
+    // Replay owns the rail while it plays: one note, one way out.
+    if (S.phase === 'replay') {
+      appendActionNote(el, 'Replay \u2014 the hand again');
+      const skip = document.createElement('button');
+      skip.type = 'button';
+      skip.className = 'btn';
+      skip.textContent = 'Skip';
+      skip.addEventListener('click', () => { S.skipReplay = true; });
+      el.appendChild(skip);
+      return;
+    }
 
     if (S.phase === 'wager') {
       appendActionNote(el, 'Set your wager');

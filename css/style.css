@@ -1347,3 +1347,15 @@ body[data-cloth="wine"] .candlelight{
 @media (prefers-reduced-motion: reduce){
   #rivalHand.redealt .card{ animation: none; }
 }
+
+/* ---- replay ------------------------------------------------------
+   The table dims slightly while it plays itself back, and the rail
+   says what you are looking at. No input beyond Skip. */
+body.replaying .table{ filter: saturate(.82) brightness(.94); }
+body.replaying .hand .card{ animation: none; }
+body.replaying .action-note{
+  color: rgba(206,168,120,.95);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
