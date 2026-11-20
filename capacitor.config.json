@@ -1,0 +1,12 @@
+{
+  "appId": "com.lasthand.game",
+  "appName": "The Last Hand",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "webContentsDebuggingEnabled": false,
+    "allowMixedContent": false
+  }
+}

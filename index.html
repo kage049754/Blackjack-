@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>The Last Hand — a gothic duel of twenty-one</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#07070a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Last Hand">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<link rel="icon" href="assets/icons/icon-192.png">
+</head>
+<body>
+
+<div class="candlelight"></div>
+<div class="vignette"></div>
+<div class="grain"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">♠</span>
+    <div>
+      <h1>The Last Hand</h1>
+      <p class="brand-sub">a duel of twenty-one</p>
+    </div>
+  </div>
+  <div class="meta">
+    <div class="meta-item"><span class="meta-label">Rank</span><span id="rankName" class="meta-value">Aspirant</span></div>
+    <div class="meta-item"><span class="meta-label">Duels Won</span><span id="duelWins" class="meta-value">0</span></div>
+    <button id="muteBtn" class="ghost-btn" type="button" aria-label="Toggle sound">Sound: On</button>
+  </div>
+</header>
+
+<main class="table">
+
+  <!-- ============ RIVAL ============ -->
+  <section class="side rival" id="rivalSide">
+    <div class="side-head">
+      <div class="sigil" aria-hidden="true">☠</div>
+      <div class="who">
+        <h2 id="rivalName">The Veiled Dealer</h2>
+        <div class="vigil" id="rivalVigil" aria-label="Rival vigil"></div>
+      </div>
+      <div class="score-box">
+        <span class="score-label">Shows</span>
+        <span class="score" id="rivalScore">—</span>
+      </div>
+    </div>
+    <div class="hand" id="rivalHand"></div>
+  </section>
+
+  <!-- ============ CENTER ============ -->
+  <section class="center">
+    <div class="stake-plate">
+      <span class="plate-label">Target</span>
+      <span class="plate-value" id="targetValue">21</span>
+    </div>
+
+    <div class="blade" id="blade" data-tension="1" aria-hidden="true">
+      <div class="blade-chain"></div>
+      <div class="blade-head">⟨ ✦ ⟩</div>
+      <div class="blade-track"><div class="blade-fill" id="bladeFill"></div></div>
+    </div>
+
+    <div class="shoe">
+      <span class="shoe-label">The Shoe</span>
+      <div class="shoe-cards" id="shoeCards"></div>
+    </div>
+
+    <div class="log" id="log" role="log" aria-live="polite"></div>
+  </section>
+
+  <!-- ============ YOU ============ -->
+  <section class="side you" id="youSide">
+    <div class="hand" id="youHand"></div>
+    <div class="side-head">
+      <div class="sigil" aria-hidden="true">✧</div>
+      <div class="who">
+        <h2 id="youName">The Seeker</h2>
+        <div class="vigil" id="youVigil" aria-label="Your vigil"></div>
+      </div>
+      <div class="score-box">
+        <span class="score-label">Your hand</span>
+        <span class="score" id="youScore">—</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ CONTROL DECK ============ -->
+<footer class="controls">
+  <div class="trump-rail">
+    <span class="rail-label">Trump Hand</span>
+    <div class="trump-hand" id="trumpHand"></div>
+  </div>
+  <div class="action-rail" id="actionRail"></div>
+</footer>
+
+<!-- ============ OVERLAY ============ -->
+<div class="overlay" id="overlay" hidden>
+  <div class="overlay-card">
+    <h3 id="ovTitle">The Duel Begins</h3>
+    <p id="ovBody"></p>
+    <div id="ovButtons" class="ov-buttons"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip" hidden></div>
+
+<script src="js/game.js"></script>
+</body>
+</html>
