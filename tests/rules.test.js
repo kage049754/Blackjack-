@@ -12,7 +12,8 @@
 const path = require('path');
 const game = require(path.resolve(__dirname, '..', 'js', 'game.js'));
 
-const { computeWinner, totalOf, TRUMPS, VESSELS, ACT_I, rollDraft, MAX_COPIES, BASE_LOADOUT } = game;
+const { computeWinner, totalOf, TRUMPS, VESSELS, ACT_I, ACTS, rollDraft, MAX_COPIES,
+        BASE_LOADOUT, arcadePool, arcadeScaled } = game;
 
 let passed = 0;
 let failed = 0;
@@ -98,9 +99,78 @@ check('other vessels have 5 Vigil',
 
 section('Act I');
 check('3 opponents', ACT_I.opponents.length, 3);
-check('final opponent cheats', ACT_I.opponents[2].cheat, true);
+check('final opponent cheats', ACT_I.opponents[2].cheats, 1);
 check('only the final opponent cheats',
-  ACT_I.opponents.filter((o) => o.cheat).length, 1);
+  ACT_I.opponents.filter((o) => o.cheats > 0).length, 1);
+check('Act I heals between duels', ACT_I.healAfterWin, 2);
+
+/* ---------------------------------------------------------
+   The descent: three acts, nine chairs
+   --------------------------------------------------------- */
+
+section('The descent');
+
+const chairs = ACTS.reduce((acc, a) => acc.concat(a.opponents), []);
+
+check('three acts', ACTS.length, 3);
+check('every act seats three', ACTS.every((a) => a.opponents.length === 3), true);
+check('nine opponents in total', chairs.length, 9);
+check('every opponent id is unique',
+  new Set(chairs.map((o) => o.id)).size, chairs.length);
+check('every opponent has a name, a line and a portrait id',
+  chairs.every((o) => o.name && o.line && o.id), true);
+check('accuracy is always a real probability',
+  chairs.every((o) => o.accuracy > 0.5 && o.accuracy <= 0.99), true);
+check('everyone starts with at least one trump',
+  chairs.every((o) => o.startTrumps >= 1), true);
+check('nobody starts with more trumps than the hand can hold',
+  chairs.every((o) => o.startTrumps <= 4), true);
+
+const avg = (act) => act.opponents.reduce((n, o) => n + o.accuracy, 0) / act.opponents.length;
+check('act II is harder than act I', avg(ACTS[1]) > avg(ACTS[0]), true);
+check('act III is harder than act II', avg(ACTS[2]) > avg(ACTS[1]), true);
+
+check('the final chair is the thing at the head of the table',
+  ACTS[2].opponents[2].id, 'head');
+check('the boss cheats twice', ACTS[2].opponents[2].cheats, 2);
+check('nothing earlier cheats twice',
+  chairs.filter((o) => o.cheats >= 2).length, 1);
+
+section('New mechanics');
+
+check('the Charnel Warden lowers the target',
+  ACTS[1].opponents[0].targetShift, -2);
+check('the surgeon lowers it further',
+  ACTS[2].opponents[1].targetShift, -3);
+check('a shifted target stays playable',
+  chairs.every((o) => !o.targetShift || (21 + o.targetShift) >= 12), true);
+check('the Twins deal an extra card', !!ACTS[1].opponents[1].extraCard, true);
+check('only the Twins do that',
+  chairs.filter((o) => o.extraCard).length, 1);
+check('the drain rate is a sane probability',
+  chairs.every((o) => !o.drain || (o.drain > 0 && o.drain < 1)), true);
+
+/* ---------------------------------------------------------
+   Arcade
+   --------------------------------------------------------- */
+
+section('Arcade');
+
+const early = arcadePool(0);
+check('an early run only meets gentle opponents',
+  early.every((o) => o.accuracy <= 0.62), true);
+check('the early pool is not empty', early.length > 0, true);
+check('the pool grows as the streak grows',
+  arcadePool(10).length >= early.length, true);
+check('a long run can meet everyone', arcadePool(20).length, 9);
+
+const soft = ACTS[0].opponents[0];
+const scaled = arcadeScaled(soft, 5);
+check('scaling raises accuracy', scaled.accuracy > soft.accuracy, true);
+check('scaling never exceeds the cap', arcadeScaled(ACTS[2].opponents[2], 30).accuracy <= 0.99, true);
+check('scaling does not mutate the source', soft.accuracy, 0.62);
+check('a long arcade run has fewer trumps to spare',
+  arcadeScaled(soft, 7).startTrumps > soft.startTrumps, true);
 
 /* ---------------------------------------------------------
    Trump draft

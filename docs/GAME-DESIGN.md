@@ -396,7 +396,62 @@ scheduled from the same rules, so the music never audibly repeats.
 - `js/game.js` — the entire ruleset, AI, and progression
 - `js/art.js` — seven vector character portraits
 - `js/bgm.js` — the generative score and stingers
+- `docs/ROADMAP.md` — milestones and what is still missing
+- `docs/REFERENCES.md` — sources studied and the licence position
 - `docs/GAME-DESIGN.md` — this document
 
 The game implements **everything in §6, §7 and §12** so the rules can be felt rather
 than argued about.
+
+---
+
+## 13. The descent, and arcade
+
+### 13.1 Three acts
+
+The story mode is nine duels in three acts. Vigil carries *between* duels inside an
+act, heals a little after each win, and **deepens by one point per act** — so the run
+gets longer and the pressure gets slower-burning rather than spikier.
+
+| Act | Chairs | The lesson |
+|---|---|---|
+| **I — The Gauntlet** | Croupier (62%), Mourner (84%), Veiled Dealer (96%, cheats once) | read the shoe, then save a trump |
+| **II — The Long Table** | Charnel Warden, Twins, Candle-Eater | the rules are not fixed |
+| **III — The Head of the Table** | Hollow Choir, Bone Surgeon, the Thing | everything you have learned, at once |
+
+Each act introduces exactly **one new rule**, and the opponent's line of dialogue
+teaches it before the deal:
+
+- **The Charnel Warden** deals to **19**. Fewer cards fit under it, so the shoe empties
+  faster and counting gets sharper.
+- **The Twins** give you a **third card unasked**. A free card is not a gift in a game
+  where 22 loses.
+- **The Candle-Eater** **eats a trump out of your hand** (50% per round). Your safety
+  net is consumable.
+- **The Hollow Choir** drains trumps and plays at 92%.
+- **The Bone Surgeon** deals to **18** and plays at 94%.
+- **The Thing at the Head of the Table** deals to 21, drains, plays at 98%, and
+  **cheats twice**. The second cheat is the act's whole point: the trump you saved for
+  the end has to cover being robbed twice.
+
+Clearing Act III ends the game with an epilogue and sets `cleared` in the save. The
+title screen then reads *Act III — cleared*.
+
+### 13.2 Arcade
+
+Arcade is the same rules with the structure taken out. It exists because the descent is
+a 25-minute commitment and sometimes you have three.
+
+- **Full Vigil every duel.** No carrying wounds; you lose because of one hand, not a run.
+- **A pool that opens up.** At streak 0 you only meet opponents rated ≤ 62%. The cap
+  rises 3.7% per win until, around streak 10, everything in the game is eligible —
+  including the Thing.
+- **No repeats.** The same opponent never sits down twice in a row.
+- **It gets worse.** Accuracy creeps up 1.2% per win (capped), their trump hand fills at
+  streak 6, and they gain an extra cheat at streak 8.
+- **Tightening loot.** You still draft after every win, so the deck grows all run.
+- **Best run is persisted** and shown on the title screen.
+
+The design intent: arcade should feel *generous* for the first few duels and then turn,
+without a wall. Because Vigil is always full, a single bad round never ends you — only a
+bad opponent does.

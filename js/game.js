@@ -82,36 +82,116 @@
      Act I — a three-opponent gauntlet. Vigil carries over.
      --------------------------------------------------------- */
 
-  const ACT_I = {
-    name: 'Act I — The Gauntlet',
-    healAfterWin: 2,
-    opponents: [
-      {
-        id: 'croupier',
-        name: 'The Pale Croupier',
-        line: 'Deals without looking at the cards.',
-        startTrumps: 1,
-        accuracy: 0.62,
-        cheat: false
-      },
-      {
-        id: 'mourner',
-        name: 'The Mourner',
-        line: 'She bets what she has already lost.',
-        startTrumps: 2,
-        accuracy: 0.84,
-        cheat: false
-      },
-      {
-        id: 'dealer',
-        name: 'The Veiled Dealer',
-        line: 'You have never seen its hands in the same place twice.',
-        startTrumps: 3,
-        accuracy: 0.96,
-        cheat: true
-      }
-    ]
-  };
+  const ACTS = [
+    {
+      numeral: 'I',
+      name: 'Act I \u2014 The Gauntlet',
+      healAfterWin: 2,
+      opponents: [
+        {
+          id: 'croupier',
+          name: 'The Pale Croupier',
+          line: 'Deals without looking at the cards.',
+          startTrumps: 1,
+          accuracy: 0.62,
+          cheats: 0
+        },
+        {
+          id: 'mourner',
+          name: 'The Mourner',
+          line: 'She bets what she has already lost.',
+          startTrumps: 2,
+          accuracy: 0.84,
+          cheats: 0
+        },
+        {
+          id: 'dealer',
+          name: 'The Veiled Dealer',
+          line: 'You have never seen its hands in the same place twice.',
+          startTrumps: 3,
+          accuracy: 0.96,
+          cheats: 1
+        }
+      ]
+    },
+    {
+      numeral: 'II',
+      name: 'Act II \u2014 The Long Table',
+      healAfterWin: 2,
+      opponents: [
+        {
+          id: 'charnel',
+          name: 'The Charnel Warden',
+          line: 'It deals to a lower number and calls it mercy.',
+          startTrumps: 1,
+          accuracy: 0.72,
+          targetShift: -2,
+          cheats: 0
+        },
+        {
+          id: 'twins',
+          name: 'The Twins',
+          line: 'Two of them. They deal you a third card before you have chosen.',
+          startTrumps: 2,
+          accuracy: 0.82,
+          extraCard: true,
+          cheats: 0
+        },
+        {
+          id: 'candle',
+          name: 'The Candle-Eater',
+          line: 'It eats what you are carrying, and it is always hungry.',
+          startTrumps: 2,
+          accuracy: 0.90,
+          drain: 0.5,
+          cheats: 0
+        }
+      ]
+    },
+    {
+      numeral: 'III',
+      name: 'Act III \u2014 The Head of the Table',
+      healAfterWin: 3,
+      opponents: [
+        {
+          id: 'choir',
+          name: 'The Hollow Choir',
+          line: 'Every mouth is open. None of them are singing to you.',
+          startTrumps: 3,
+          accuracy: 0.92,
+          drain: 0.35,
+          cheats: 0
+        },
+        {
+          id: 'surgeon',
+          name: 'The Bone Surgeon',
+          line: 'It measures the table the way it measures a body.',
+          startTrumps: 2,
+          accuracy: 0.94,
+          targetShift: -3,
+          cheats: 0
+        },
+        {
+          id: 'head',
+          name: 'The Thing at the Head of the Table',
+          line: 'It has been waiting for you to be worth its time.',
+          startTrumps: 3,
+          accuracy: 0.98,
+          cheats: 2,
+          drain: 0.3,
+          cheatsAgain: true
+        }
+      ]
+    }
+  ];
+
+  /* Kept as the first act; tests and older code refer to it by name. */
+  const ACT_I = ACTS[0];
+
+  function currentAct() {
+    const i = Math.max(0, Math.min(save.act || 0, ACTS.length - 1));
+    return ACTS[i];
+  }
 
   /* ---------------------------------------------------------
      1. Audio — procedural, no assets
@@ -225,7 +305,8 @@
 
   function blankSave() {
     return { version: SAVE_VERSION, wins: 0, duels: 0, candles: 0,
-             seenIntro: false, reduceMotion: false, musicOn: true };
+             seenIntro: false, reduceMotion: false, musicOn: true,
+             act: 0, cleared: false, bestArcade: 0 };
   }
 
   /** Non-negative integer, or the fallback. Guards against corrupt saves. */
@@ -248,6 +329,10 @@
           out.candles = safeInt(p.candles, 0, 1e9);
           out.seenIntro = !!p.seenIntro;
           out.reduceMotion = !!p.reduceMotion;
+          out.musicOn = p.musicOn === undefined ? true : !!p.musicOn;
+          out.act = safeInt(p.act, 0, ACTS.length - 1);
+          out.cleared = !!p.cleared;
+          out.bestArcade = safeInt(p.bestArcade, 0, 1e6);
 
           // migration hook: anything older than v2 is upgraded field-by-field
           out.version = SAVE_VERSION;
@@ -425,7 +510,8 @@
       doubled: false,
       revealed: false,
       vessel: opts.vessel || null,
-      cheat: !!opts.cheat,
+      cheat: !!(opts.cheats || opts.cheat),
+      cheatsLeft: opts.cheats || (opts.cheat ? 1 : 0),
       cheatUsed: false,
       accuracy: typeof opts.accuracy === 'number' ? opts.accuracy : 1,
       startTrumps: opts.startTrumps || 0
@@ -639,7 +725,7 @@
 
   /** One duel against the current opponent. Resolves true if you survived. */
   async function runDuel() {
-    const opp = ACT_I.opponents[S.opponentIndex];
+    const opp = S.opponent || currentAct().opponents[S.opponentIndex];
 
     S.round = 0;
     S.you.cards = [];
@@ -647,9 +733,9 @@
     S.you.ward = false;
 
     S.rival = makeSide(opp.name, false, {
-      maxVigil: START_VIGIL,
+      maxVigil: opp.vigil || START_VIGIL,
       startTrumps: opp.startTrumps,
-      cheat: opp.cheat,
+      cheats: opp.cheats || 0,
       accuracy: opp.accuracy
     });
 
@@ -675,7 +761,8 @@
     S.running = true;
     S.phase = 'play';
 
-    while (S.opponentIndex < ACT_I.opponents.length) {
+    while (S.opponentIndex < currentAct().opponents.length) {
+      S.opponent = currentAct().opponents[S.opponentIndex];
       const survived = await runDuel();
 
       save.duels++;
@@ -691,7 +778,7 @@
       render();
 
       S.opponentIndex++;
-      if (S.opponentIndex >= ACT_I.opponents.length) break;
+      if (S.opponentIndex >= currentAct().opponents.length) break;
 
       // a moment to breathe
       S.you.vigil = Math.min(
@@ -781,11 +868,41 @@
     });
   }
 
+  async function showEnding() {
+    S.phase = 'over';
+    stopTimer();
+    hideTitle();
+    sfx.chime();
+    setTimeout(() => sfx.chime(), 400);
+    setTimeout(() => sfx.chime(), 800);
+    if (window.BGM) { BGM.setMood('title'); BGM.stinger('win'); }
+
+    save.cleared = true;
+    save.candles += 100;
+    writeSave();
+    render();
+
+    const best = save.bestArcade || 0;
+    const body =
+      'The thing at the head of the table stands up, and keeps standing up. It was never '
+      + 'sitting down. What you took for a chair was its hand.\n\n'
+      + 'You do not win. You take the last hand, and the table lets you keep it. The candles '
+      + 'go out one at a time. The door you have never seen is open, and it is not dark in there.\n\n'
+      + 'Rank ' + rankFor(save.wins).name + ' \u00b7 duels won ' + save.wins
+      + ' \u00b7 candles ' + save.candles
+      + (best ? ' \u00b7 best arcade run ' + best : '');
+
+    showOverlay('The Last Hand', body, [
+      { label: 'Walk Out', cls: 'primary', onClick: () => { hideOverlay(); showTitle(); } }
+    ], 'win');
+  }
+
   async function endAct(won) {
     S.phase = 'over';
     stopTimer();
     sfx.stopDrone();
-    if (window.BGM) BGM.setMood('title');
+
+    const isFinal = (save.act || 0) >= ACTS.length - 1;
 
     if (won) {
       save.candles += 25;
@@ -800,37 +917,74 @@
     }
     render();
 
-    let body = won
-      ? 'You stand up from the last chair. Somewhere above, a door you have never seen unlocks itself.'
-      : `The blade finds you on chair ${S.opponentIndex + 1} of ${ACT_I.opponents.length}. ` +
-        'Somewhere above, something with your face reshuffles.';
+    if (won && isFinal) { await showEnding(); return; }
 
-    if (!won && S.lastRound) {
+    if (won) {
+      const next = ACTS[(save.act || 0) + 1];
+      if (window.BGM) BGM.setMood('title');
+
+      showOverlay(
+        'The Act Is Cleared',
+        'You stand up from the last chair of the act. ' + next.name
+        + ' is below this room, and ' + next.opponents.length
+        + ' are already seated there. ' + next.opponents[0].name + ' does not look up.\n\n'
+        + 'Your candles: ' + save.candles + '.',
+        [{
+          label: 'Descend',
+          cls: 'primary',
+          onClick: () => {
+            hideOverlay();
+            save.act = Math.min(ACTS.length - 1, (save.act || 0) + 1);
+            writeSave();
+            startAct();
+          }
+        }, {
+          label: 'Return to the Crypt',
+          onClick: () => { hideOverlay(); showTitle(); }
+        }],
+        'win'
+      );
+      return;
+    }
+
+    if (window.BGM) BGM.setMood('title');
+
+    let body = 'The blade finds you on chair ' + (S.opponentIndex + 1)
+      + ' of ' + currentAct().opponents.length + '. '
+      + 'Somewhere above, something with your face reshuffles.';
+
+    if (S.lastRound) {
       const r = S.lastRound;
       const left = S.deck.length;
-      body += ` The last hand: you had ${r.yt}, they had ${r.rt}, the target was ${r.target}.`;
+      body += ' The last hand: you had ' + r.yt + ', they had ' + r.rt
+        + ', the target was ' + r.target + '.';
       body += r.youBust
         ? ' You went over. The shoe still held what you needed.'
         : ' You did not go far enough.';
-      body += ` ${left} card${left === 1 ? '' : 's'} were still in the shoe — that is where the answer was.`;
+      body += ' ' + left + ' card' + (left === 1 ? '' : 's')
+        + ' were still in the shoe \u2014 that is where the answer was.';
     }
 
-    showOverlay(
-      won ? 'The Act Is Cleared' : 'The Blade Finds You',
-      body,
-      [{
-        label: 'Return to the Crypt',
-        cls: 'primary',
-        onClick: () => { hideOverlay(); showTitle(); }
-      }],
-      won ? 'win' : 'lose'
-    );
+    showOverlay('The Blade Finds You', body, [{
+      label: 'Rise Again',
+      cls: 'primary',
+      onClick: () => { hideOverlay(); startAct(); }
+    }, {
+      label: 'Return to the Crypt',
+      onClick: () => { hideOverlay(); showTitle(); }
+    }], 'lose');
   }
 
   async function runRound() {
     S.round++;
     S.deck = makeDeck();
     S.target = DEFAULT_TARGET;
+
+    // Some opponents deal to a different number, and say so.
+    const opp = S.opponent || {};
+    if (opp.targetShift) {
+      S.target = Math.max(12, DEFAULT_TARGET + opp.targetShift);
+    }
     S.turn = S.round % 2 === 1 ? 'you' : 'rival';
 
     [S.you, S.rival].forEach((s) => {
@@ -848,6 +1002,16 @@
     grantTrump(S.rival);
     // The Confessor hears confessions: two trumps a round.
     if (S.you.vessel === 'confessor') grantTrump(S.you);
+
+    // Some things eat what you are carrying.
+    if (opp.drain && S.you.trumps.length && Math.random() < opp.drain) {
+      const idx = Math.floor(Math.random() * S.you.trumps.length);
+      const eaten = S.you.trumps.splice(idx, 1)[0];
+      say(`${opp.name} takes the <em>${TRUMPS[eaten].name}</em> out of your hand and swallows it.`);
+      sfx.wrong();
+      render();
+      await sleep(900);
+    }
 
     /* --- wager --- */
     S.phase = 'wager';
@@ -876,6 +1040,14 @@
       render();
       sfx.flick();
       await sleep(420);
+    }
+
+    if (opp.extraCard && S.deck.length) {
+      S.you.cards.push({ v: S.deck.shift(), hidden: false });
+      render();
+      sfx.deal();
+      say('They deal you a third card unasked, and smile about it.');
+      await sleep(650);
     }
 
     say('The cards are dealt. One remains unseen in each hand.');
@@ -1007,6 +1179,7 @@
   async function playCheat() {
     const r = S.rival;
     r.cheatUsed = true;
+    r.cheatsLeft = Math.max(0, r.cheatsLeft - 1);
 
     say('The dealer\u2019s sleeve moves. The card you were watching was never the card.');
     render();
@@ -1046,7 +1219,7 @@
     S.phase = 'showdown';
     stopTimer();
 
-    if (S.rival.cheat && !S.rival.cheatUsed && resolveWinner() === 'you') {
+    if (S.rival.cheatsLeft > 0 && resolveWinner() === 'you') {
       await playCheat();
     }
 
@@ -1187,6 +1360,125 @@
   }
 
   /* ---------------------------------------------------------
+     9b. Arcade — one hand after another, no acts, no continues
+     --------------------------------------------------------- */
+
+  /* Who is allowed to sit down this early in a run. */
+  function arcadePool(streak) {
+    const all = ACTS.reduce((acc, act) => acc.concat(act.opponents), []);
+    const cap = Math.min(0.99, 0.62 + Math.min(streak, 10) * 0.037);
+    const pool = all.filter((o) => (o.accuracy || 0) <= cap);
+    return pool.length ? pool : all;
+  }
+
+  /* The same opponent never sits down twice in a row. */
+  function pickArcadeOpponent(streak) {
+    const pool = arcadePool(streak);
+    const fresh = pool.filter((o) => o.id !== S.lastArcadeId);
+    const list = fresh.length ? fresh : pool;
+    const pick = list[Math.floor(Math.random() * list.length)];
+    S.lastArcadeId = pick.id;
+    return pick;
+  }
+
+  /* Later runs are nastier: accuracy creeps up, and their trump hand fills. */
+  function arcadeScaled(opp, streak) {
+    const bump = Math.min(0.09, streak * 0.012);
+    return Object.assign({}, opp, {
+      accuracy: Math.max(0.5, Math.min(0.99, (opp.accuracy || 0.8) + bump)),
+      startTrumps: Math.min(4, (opp.startTrumps || 2) + (streak >= 6 ? 1 : 0)),
+      cheats: (opp.cheats || 0) + (streak >= 8 ? 1 : 0)
+    });
+  }
+
+  async function endArcade() {
+    S.phase = 'over';
+    stopTimer();
+    sfx.stopDrone();
+    sfx.toll();
+    if (window.BGM) { BGM.setMood('title'); BGM.stinger('death'); }
+
+    const streak = S.arcadeStreak || 0;
+    const best = Math.max(streak, save.bestArcade || 0);
+    save.bestArcade = best;
+    writeSave();
+    render();
+
+    showOverlay(
+      'The Hand Ends',
+      streak === 0
+        ? 'You lost the first hand. The table did not even lean forward. Try another.'
+        : 'You took ' + streak + ' duel' + (streak === 1 ? '' : 's')
+          + ' before the blade found you. Best run: ' + best + '.\n\n'
+          + 'Candles: ' + save.candles + '.',
+      [{
+        label: 'Deal Again',
+        cls: 'primary',
+        onClick: () => { hideOverlay(); startArcade(); }
+      }, {
+        label: 'Return to the Crypt',
+        onClick: () => { hideOverlay(); showTitle(); }
+      }],
+      'lose'
+    );
+  }
+
+  async function runArcade() {
+    S.mode = 'arcade';
+    S.running = true;
+    S.phase = 'play';
+    S.arcadeStreak = 0;
+    S.loadout = BASE_LOADOUT.slice();
+    S.lastRound = null;
+    S.opponentIndex = 0;
+
+    while (true) {
+      S.opponent = arcadeScaled(pickArcadeOpponent(S.arcadeStreak), S.arcadeStreak);
+      // Arcade forgives: everyone sits down with a full Vigil.
+      S.you.vigil = S.you.maxVigil;
+
+      const survived = await runDuel();
+      if (!survived) { await endArcade(); return; }
+
+      S.arcadeStreak++;
+      save.wins++;
+      save.candles += 8;
+      if (S.arcadeStreak > (save.bestArcade || 0)) save.bestArcade = S.arcadeStreak;
+      writeSave();
+      render();
+
+      const drafted = await draftTrump();
+      if (drafted) {
+        S.loadout.push(drafted);
+        render();
+      }
+    }
+  }
+
+  function startArcade() {
+    hideOverlay();
+    hideTitle();
+    stopTimer();
+    resolver = null;
+
+    const v = vesselOf(S.vesselId);
+    // One extra Vigil: arcade duels are meant to be survivable.
+    S.you = makeSide('You', true, { maxVigil: v.maxVigil + 1, vessel: S.vesselId });
+    S.opponent = null;
+    S.opponentIndex = 0;
+    S.act = 0;
+    S.message = '';
+
+    save.seenIntro = true;
+    writeSave();
+
+    sfx.startDrone();
+    if (window.BGM) BGM.start('duel');
+    render();
+    runArcade();
+  }
+
+  /* ---------------------------------------------------------
      10. Rendering
      --------------------------------------------------------- */
 
@@ -1198,7 +1490,7 @@
 
   /* Art ids differ from opponent ids only for the last of Act I. */
   function opponentArtId() {
-    const opp = ACT_I.opponents[S.opponentIndex];
+    const opp = S.opponent || currentAct().opponents[S.opponentIndex];
     if (!opp) return 'veiled';
     return opp.id === 'dealer' ? 'veiled' : opp.id;
   }
@@ -1238,9 +1530,10 @@
 
     if ($('youName')) $('youName').textContent = vesselOf(S.vesselId).name;
     if ($('rivalName')) $('rivalName').textContent = S.rival.label;
+    if ($('actLabel')) $('actLabel').textContent = 'Act ' + currentAct().numeral;
     if ($('actProgress')) {
       $('actProgress').textContent =
-        Math.min(S.opponentIndex + 1, ACT_I.opponents.length) + ' / ' + ACT_I.opponents.length;
+        Math.min(S.opponentIndex + 1, currentAct().opponents.length) + ' / ' + currentAct().opponents.length;
     }
 
     $('targetValue').textContent = S.target;
@@ -1526,6 +1819,10 @@
     if (rankEl) rankEl.textContent = rankFor(save.wins).name;
     const candleEl = $('titleCandles');
     if (candleEl) candleEl.textContent = save.candles;
+    if ($('titleAct')) {
+      $('titleAct').textContent = 'Act ' + currentAct().numeral + (save.cleared ? ' \u2014 cleared' : '');
+    }
+    if ($('titleBest')) $('titleBest').textContent = save.bestArcade || 0;
 
     const grid = $('vesselGrid');
     if (!grid) return;
@@ -1588,7 +1885,10 @@
     hideOverlay();
     hideTitle();
 
-    S.you = makeSide('You', true, { maxVigil: v.maxVigil, vessel: S.vesselId });
+    S.act = Math.max(0, Math.min(save.act || 0, ACTS.length - 1));
+    S.opponent = null;
+    // Your Vigil deepens as you descend.
+    S.you = makeSide('You', true, { maxVigil: v.maxVigil + S.act, vessel: S.vesselId });
     S.opponentIndex = 0;
     S.loadout = BASE_LOADOUT.slice();
     S.lastRound = null;
@@ -1725,6 +2025,9 @@
     bindLifecycle();
     registerServiceWorker();
 
+    const arcadeBtn = $('arcadeBtn');
+    if (arcadeBtn) arcadeBtn.addEventListener('click', () => { startArcade(); });
+
     const enter = $('enterBtn');
     if (enter) enter.addEventListener('click', startAct);
 
@@ -1749,7 +2052,10 @@
       totalOf: function (cards) { return cards.reduce(function (a, c) { return a + c.v; }, 0); },
       TRUMPS: TRUMPS,
       VESSELS: VESSELS,
-      ACT_I: ACT_I
+      ACT_I: ACT_I,
+      ACTS: ACTS,
+      arcadePool: arcadePool,
+      arcadeScaled: arcadeScaled
     };
   }
 

@@ -2,8 +2,8 @@
 
 Start to finish: from the shipped prototype to a released product.
 
-**Status: v2.0.0 — Act I with drafting, seven vector characters, a generative score,
-full sound design, offline APK shipping.**
+**Status: v3.0.0 — the game is content-complete. Three acts and nine opponents, an
+arcade mode, thirteen vector characters, a generative score, offline APK shipping.**
 Target: **v2.0 — Steam + Android release** with real-time PvP.
 
 ---

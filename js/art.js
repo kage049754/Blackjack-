@@ -311,6 +311,213 @@
     <path d="M130 78 Q142 104 132 136" stroke="${PALETTE.blood}" stroke-width="2" fill="none" opacity="0.35"/>`;
   }
 
+
+  /* ---------------- Act II ----------------
+     The long table. Things that have been at it a while. */
+
+  function charnel(k) {
+    return `
+    ${defs(k, '#9aa6a0', '#a2927c')}
+    <!-- butcher's apron -->
+    <path d="M22 250 Q30 170 74 154 L126 154 Q170 170 178 250 Z" fill="url(#cloak${k})"/>
+    <path d="M70 168 L130 168 L138 250 L62 250 Z" fill="#3a332b" opacity="0.9"/>
+    <path d="M70 168 L130 168 L132 180 L68 180 Z" fill="#4a4034"/>
+    <!-- neck -->
+    <path d="M86 146 Q100 156 114 146 L116 124 L84 124 Z" fill="url(#skin${k})"/>
+    <!-- iron half-mask, riveted -->
+    <ellipse cx="100" cy="96" rx="31" ry="35" fill="url(#skin${k})"/>
+    <path d="M100 62 Q132 64 134 96 Q136 128 100 134 L100 62 Z" fill="#6f7278"/>
+    <path d="M100 62 Q132 64 134 96 Q136 128 100 134 L100 62 Z" fill="#8b8f96" opacity="0.35"/>
+    <g fill="#4b4e54"><circle cx="112" cy="74" r="2"/><circle cx="124" cy="84" r="2"/>
+      <circle cx="128" cy="100" r="2"/><circle cx="122" cy="116" r="2"/><circle cx="110" cy="126" r="2"/></g>
+    <!-- eye slit, cold -->
+    <rect x="102" y="92" width="26" height="4" rx="2" fill="#0a0a0e"/>
+    <circle cx="114" cy="94" r="1.6" fill="${PALETTE.cold}"/>
+    <!-- working jaw -->
+    <path d="M84 118 Q92 126 100 124" stroke="#4a3a30" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M66 88 Q60 108 68 130" stroke="url(#rim${k})" stroke-width="3.5" fill="none" opacity="0.75"/>
+    <!-- hanging hook -->
+    <path d="M160 8 L160 60 q0 14 12 14 q12 0 12 -12" stroke="#5a5e66" stroke-width="3" fill="none"/>
+    <path d="M172 74 q0 8 -6 8" stroke="#7d828a" stroke-width="3" fill="none"/>`;
+  }
+
+  function twins(k) {
+    return `
+    ${defs(k, '#a99bb0', '#b09a86')}
+    <!-- one body, two heads -->
+    <path d="M24 250 Q32 176 70 158 L130 158 Q168 176 176 250 Z" fill="url(#cloak${k})"/>
+    <path d="M100 158 L100 250" stroke="#05050a" stroke-width="2" opacity="0.6"/>
+    <!-- left head -->
+    <ellipse cx="76" cy="100" rx="24" ry="30" fill="url(#skin${k})"/>
+    <path d="M52 104 Q50 62 76 58 Q102 62 100 104 Q96 78 76 74 Q56 78 52 104 Z" fill="#12121a"/>
+    <ellipse cx="68" cy="100" rx="3.4" ry="4.4" fill="#08080c"/>
+    <ellipse cx="84" cy="100" rx="3.4" ry="4.4" fill="#08080c"/>
+    <circle cx="67" cy="99" r="1.2" fill="${PALETTE.bone}"/>
+    <circle cx="83" cy="99" r="1.2" fill="${PALETTE.bone}"/>
+    <path d="M70 116 q6 3 12 0" stroke="#3b2a20" stroke-width="1.8" fill="none"/>
+    <!-- right head -->
+    <ellipse cx="124" cy="100" rx="24" ry="30" fill="url(#skin${k})"/>
+    <path d="M100 104 Q98 62 124 58 Q150 62 148 104 Q144 78 124 74 Q104 78 100 104 Z" fill="#12121a"/>
+    <ellipse cx="116" cy="100" rx="3.4" ry="4.4" fill="#08080c"/>
+    <ellipse cx="132" cy="100" rx="3.4" ry="4.4" fill="#08080c"/>
+    <circle cx="115" cy="99" r="1.2" fill="${PALETTE.bone}"/>
+    <circle cx="131" cy="99" r="1.2" fill="${PALETTE.bone}"/>
+    <path d="M118 116 q6 3 12 0" stroke="#3b2a20" stroke-width="1.8" fill="none"/>
+    <!-- joined hands at the collar -->
+    <path d="M92 168 q8 -10 16 0 q-8 8 -16 0z" fill="url(#skin${k})"/>
+    <path d="M54 88 Q48 104 56 122" stroke="url(#rim${k})" stroke-width="3" fill="none" opacity="0.7"/>
+    <path d="M146 88 Q152 104 144 122" stroke="url(#rim${k})" stroke-width="3" fill="none" opacity="0.7"/>`;
+  }
+
+  function candleEater(k) {
+    return `
+    ${defs(k, PALETTE.amber, '#b9a58c')}
+    <path d="M26 250 Q34 176 74 158 L126 158 Q166 176 174 250 Z" fill="url(#cloak${k})"/>
+    <!-- neck, thin -->
+    <path d="M88 148 Q100 156 112 148 L114 122 L86 122 Z" fill="url(#skin${k})"/>
+    <!-- gaunt head -->
+    <ellipse cx="100" cy="96" rx="28" ry="35" fill="url(#skin${k})"/>
+    <path d="M72 92 Q70 54 100 50 Q130 54 128 92 Q124 68 100 64 Q76 68 72 92 Z" fill="#0e0e16"/>
+    <!-- sunken cheeks -->
+    <path d="M74 104 q6 22 12 24" stroke="#6c5f50" stroke-width="2" fill="none" opacity="0.55"/>
+    <path d="M126 104 q-6 22 -12 24" stroke="#6c5f50" stroke-width="2" fill="none" opacity="0.55"/>
+    <!-- hollow eyes -->
+    <ellipse cx="88" cy="96" rx="6.5" ry="7.5" fill="#06060a"/>
+    <ellipse cx="112" cy="96" rx="6.5" ry="7.5" fill="#06060a"/>
+    <circle cx="88" cy="97" r="1.6" fill="${PALETTE.amber}" opacity="0.75"/>
+    <circle cx="112" cy="97" r="1.6" fill="${PALETTE.amber}" opacity="0.75"/>
+    <!-- mouth open around a flame -->
+    <ellipse cx="100" cy="120" rx="9" ry="11" fill="#1a0f0b"/>
+    <path d="M100 112 q5 6 0 12 q-5 -6 0 -12z" fill="#ffd27a"/>
+    <ellipse cx="100" cy="118" rx="12" ry="14" fill="${PALETTE.amber}" opacity="0.16"/>
+    <!-- wax running down the chin -->
+    <path d="M96 131 q1 14 -2 22" stroke="#e6dcc9" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <path d="M104 131 q3 10 1 16" stroke="#d8cdb4" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <!-- candle stubs at the shoulder -->
+    <rect x="150" y="196" width="10" height="26" rx="2" fill="#e2d7bf"/>
+    <path d="M155 182 q5 7 0 13 q-5 -6 0 -13z" fill="#ffd27a"/>
+    <path d="M68 92 Q62 110 70 128" stroke="url(#rim${k})" stroke-width="3.5" fill="none" opacity="0.8"/>`;
+  }
+
+  /* ---------------- Act III ----------------
+     The head of the table. It has been waiting. */
+
+  function choir(k) {
+    return `
+    ${defs(k, '#8f7ba0', '#a99a8c')}
+    <path d="M18 250 Q28 168 72 150 L128 150 Q172 168 182 250 Z" fill="url(#cloak${k})"/>
+    <!-- three hoods, overlapping -->
+    <g opacity="0.55">
+      <ellipse cx="58" cy="106" rx="22" ry="28" fill="#0b0b12"/>
+      <path d="M58 118 q6 8 0 12 q-6 -4 0 -12z" fill="#05050a"/>
+    </g>
+    <g opacity="0.55">
+      <ellipse cx="142" cy="106" rx="22" ry="28" fill="#0b0b12"/>
+      <path d="M142 118 q6 8 0 12 q-6 -4 0 -12z" fill="#05050a"/>
+    </g>
+    <!-- the centre face -->
+    <ellipse cx="100" cy="96" rx="28" ry="34" fill="url(#skin${k})"/>
+    <path d="M72 100 Q70 56 100 50 Q130 56 128 100 Q124 72 100 68 Q76 72 72 100 Z" fill="#0a0a12"/>
+    <!-- all their mouths are open, singing -->
+    <ellipse cx="88" cy="94" rx="5" ry="7" fill="#120a0e"/>
+    <ellipse cx="112" cy="94" rx="5" ry="7" fill="#120a0e"/>
+    <ellipse cx="100" cy="122" rx="10" ry="13" fill="#120a0e"/>
+    <path d="M100 130 q4 -6 0 -12 q-4 6 0 12z" fill="#3a1020"/>
+    <!-- breath -->
+    <ellipse cx="100" cy="134" rx="16" ry="7" fill="${PALETTE.bone}" opacity="0.07"/>
+    <!-- hood ring -->
+    <path d="M100 40 Q60 48 62 104" stroke="#2a2030" stroke-width="3" fill="none" opacity="0.8"/>
+    <path d="M100 40 Q140 48 138 104" stroke="#2a2030" stroke-width="3" fill="none" opacity="0.8"/>
+    <path d="M70 88 Q64 108 72 128" stroke="url(#rim${k})" stroke-width="3.5" fill="none" opacity="0.8"/>`;
+  }
+
+  function surgeon(k) {
+    return `
+    ${defs(k, '#9ba79c', '#a89680')}
+    <path d="M24 250 Q32 174 74 156 L126 156 Q168 174 176 250 Z" fill="url(#cloak${k})"/>
+    <!-- leather apron, stained -->
+    <path d="M70 170 L130 170 L138 250 L62 250 Z" fill="#2c241c"/>
+    <g fill="#4a1a18" opacity="0.55">
+      <circle cx="86" cy="204" r="7"/><circle cx="112" cy="226" r="5"/><circle cx="96" cy="236" r="3.4"/>
+    </g>
+    <!-- neck -->
+    <path d="M86 148 Q100 158 114 148 L116 126 L84 126 Z" fill="url(#skin${k})"/>
+    <!-- head -->
+    <ellipse cx="100" cy="98" rx="30" ry="34" fill="url(#skin${k})"/>
+    <path d="M70 94 Q68 56 100 52 Q132 56 130 94 Q126 70 100 66 Q74 70 70 94 Z" fill="#171018"/>
+    <!-- brass goggles -->
+    <g>
+      <circle cx="86" cy="96" r="12" fill="#141018" stroke="#a8853f" stroke-width="2.4"/>
+      <circle cx="114" cy="96" r="12" fill="#141018" stroke="#a8853f" stroke-width="2.4"/>
+      <path d="M98 96 h4" stroke="#a8853f" stroke-width="2.4"/>
+      <circle cx="86" cy="96" r="6" fill="#2b3a3a" opacity="0.9"/>
+      <circle cx="114" cy="96" r="6" fill="#2b3a3a" opacity="0.9"/>
+      <circle cx="83" cy="93" r="2" fill="#cfe0d8" opacity="0.5"/>
+      <circle cx="111" cy="93" r="2" fill="#cfe0d8" opacity="0.5"/>
+    </g>
+    <!-- surgical mask -->
+    <path d="M78 110 Q100 104 122 110 L120 128 Q100 134 80 128 Z" fill="#cfc6b2"/>
+    <g stroke="#a89e8a" stroke-width="0.8"><path d="M84 112 L83 127"/><path d="M92 110 L91 129"/>
+      <path d="M100 109 L100 130"/><path d="M108 110 L109 129"/><path d="M116 112 L117 127"/></g>
+    <!-- bone saw -->
+    <g transform="translate(140 190) rotate(14)">
+      <rect x="0" y="0" width="46" height="9" rx="2" fill="#8b8f96"/>
+      <path d="M0 9 h10 l2 4 l-2 4 h-10z" fill="#6f7278"/>
+      <path d="M4 4 h38" stroke="#b9bdc4" stroke-width="1.4" opacity="0.7"/>
+    </g>
+    <path d="M68 86 Q60 108 68 130" stroke="url(#rim${k})" stroke-width="3.5" fill="none" opacity="0.85"/>`;
+  }
+
+  function head(k) {
+    return `
+    ${defs(k, PALETTE.blood, '#cfc4b0')}
+    <!-- it is very tall -->
+    <path d="M10 250 Q22 158 66 140 L134 140 Q178 158 190 250 Z" fill="url(#cloak${k})"/>
+    <!-- collar of small candles -->
+    <g opacity="0.9">
+      <rect x="52" y="150" width="7" height="18" rx="2" fill="#ded3ba"/>
+      <rect x="70" y="146" width="7" height="22" rx="2" fill="#ded3ba"/>
+      <rect x="123" y="146" width="7" height="22" rx="2" fill="#ded3ba"/>
+      <rect x="141" y="150" width="7" height="18" rx="2" fill="#ded3ba"/>
+      <g fill="#ffd27a"><path d="M55.5 142 q4 6 0 10 q-4 -4 0 -10z"/>
+        <path d="M73.5 138 q4 6 0 10 q-4 -4 0 -10z"/>
+        <path d="M126.5 138 q4 6 0 10 q-4 -4 0 -10z"/>
+        <path d="M144.5 142 q4 6 0 10 q-4 -4 0 -10z"/></g>
+    </g>
+    <!-- long mask: too long, too smooth -->
+    <path d="M100 28 Q140 34 142 96 Q144 148 100 158 Q56 148 58 96 Q60 34 100 28 Z" fill="#d8cebb"/>
+    <path d="M100 28 Q140 34 142 96 Q144 148 100 158 Q56 148 58 96 Q60 34 100 28 Z" fill="url(#skin${k})" opacity="0.30"/>
+    <!-- seven eyes, arranged wrong -->
+    <g fill="#05050a">
+      <ellipse cx="82" cy="76" rx="7" ry="5"/>
+      <ellipse cx="118" cy="76" rx="7" ry="5"/>
+      <ellipse cx="100" cy="66" rx="6" ry="4.4"/>
+      <ellipse cx="70" cy="96" rx="5" ry="3.6"/>
+      <ellipse cx="130" cy="96" rx="5" ry="3.6"/>
+      <ellipse cx="88" cy="112" rx="5.5" ry="4"/>
+      <ellipse cx="112" cy="112" rx="5.5" ry="4"/>
+    </g>
+    <g fill="${PALETTE.blood}">
+      <circle cx="82" cy="76" r="1.8"/><circle cx="118" cy="76" r="1.8"/>
+      <circle cx="100" cy="66" r="1.5"/><circle cx="70" cy="96" r="1.2"/>
+      <circle cx="130" cy="96" r="1.2"/><circle cx="88" cy="112" r="1.3"/>
+      <circle cx="112" cy="112" r="1.3"/>
+    </g>
+    <!-- the mouth: a seam, sewn shut -->
+    <path d="M86 138 Q100 142 114 138" stroke="#4a2a26" stroke-width="1.8" fill="none"/>
+    <g stroke="#8e1b18" stroke-width="1.6">
+      <path d="M90 134 L92 142"/><path d="M96 135 L97 143"/><path d="M103 135 L102 143"/><path d="M109 134 L108 142"/>
+    </g>
+    <!-- crown of hands -->
+    <g fill="#16161e" opacity="0.95">
+      <path d="M78 30 q-6 -18 4 -22 q2 10 6 4 q2 8 6 18z"/>
+      <path d="M100 26 q-4 -20 4 -24 q4 10 8 6 q0 10 2 18z"/>
+      <path d="M122 30 q6 -18 -4 -22 q-2 10 -6 4 q-2 8 -6 18z"/>
+    </g>
+    <path d="M60 60 Q46 96 62 140" stroke="url(#rim${k})" stroke-width="4" fill="none" opacity="0.9"/>
+    <path d="M140 60 Q154 96 138 140" stroke="${PALETTE.blood}" stroke-width="2" fill="none" opacity="0.35"/>`;
+  }
+
   const ART = {
     widow:       { draw: widow,       label: 'The Widow, veiled in mourning lace' },
     gravedigger: { draw: gravedigger, label: 'The Gravedigger, hooded and lantern-lit' },
@@ -318,7 +525,13 @@
     bride:       { draw: bride,       label: 'The Hollow Bride, porcelain face and veil' },
     croupier:    { draw: croupier,    label: 'The Pale Croupier, faceless beneath a top hat' },
     mourner:     { draw: mourner,     label: 'The Mourner, hooded with a black-bordered card' },
-    veiled:      { draw: veiled,      label: 'The Veiled Dealer, masked and gold-filigreed' }
+    veiled:      { draw: veiled,      label: 'The Veiled Dealer, masked and gold-filigreed' },
+    charnel:     { draw: charnel,     label: 'The Charnel Warden, iron half-mask and butcher\u2019s apron' },
+    twins:       { draw: twins,       label: 'The Twins, two heads on one body' },
+    candle:      { draw: candleEater, label: 'The Candle-Eater, a flame burning in its throat' },
+    choir:       { draw: choir,       label: 'The Hollow Choir, three mouths singing' },
+    surgeon:     { draw: surgeon,     label: 'The Bone Surgeon, brass goggles and a saw' },
+    head:        { draw: head,        label: 'The Thing at the Head of the Table, crowned in hands' }
   };
 
   function portrait(id) {
@@ -330,7 +543,8 @@
   /* A tiny sigil for rail badges and list rows. */
   function sigil(id) {
     const map = { widow: '♠', gravedigger: '†', confessor: '✝', bride: '✿',
-                  croupier: '♣', mourner: '♦', veiled: '♥' };
+                  croupier: '♣', mourner: '♦', veiled: '♥',
+                  charnel: '⚒', twins: '⚭', candle: '✧', choir: '♪', surgeon: '✂', head: '♛' };
     return map[id] || '♠';
   }
 

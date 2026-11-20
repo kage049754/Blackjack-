@@ -24,15 +24,28 @@ python3 -m http.server 8000     # or: npm run serve
 
 ## Download the Android APK
 
-**[⬇ The Last Hand v2.0.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v2.0.0/TheLastHand-v2.0.0.apk)**
+**[⬇ The Last Hand v3.0.0 — Android APK](https://github.com/kage049754/Blackjack-/releases/download/v3.0.0/TheLastHand-v3.0.0.apk)**
 
-- 5.2 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
-- **SHA-256** `052e65b0574e8c59564dfecc781956a366341b06d346575b219f1bbbe7ac78e8`
+- 5.3 MB · `com.lasthand.game` · minSdk 23 (Android 6.0+) · targetSdk 35
 - Debug-signed, so it sideloads onto any device. Enable
   *Install unknown apps* for your file manager, then tap the file.
 - **Works in airplane mode.** The whole game is inside the APK.
 
-**v2.0.0 adds: characters, art and a full score.**
+**v3.0.0 is the finished game.**
+
+- **Three acts, nine opponents.** Act I is a gauntlet; Act II is the long table; Act III
+  is the head of the table, where the last thing at it has two cheats and no patience.
+  Your Vigil deepens one point per act; the descent ends with an epilogue, not a menu.
+- **New mechanics, one per act.** The Charnel Warden deals to **19** instead of 21. The
+  Twins deal you a **third card unasked**. The Candle-Eater **eats a trump out of your
+  hand**. The Bone Surgeon deals to **18**. The Hollow Choir drains and reads you.
+- **Six new characters**, all drawn in code: the Charnel Warden, the Twins, the
+  Candle-Eater, the Hollow Choir, the Bone Surgeon, and the Thing at the Head of the Table.
+- **Arcade mode.** No acts, no continues: one hand after another, full Vigil every duel,
+  opponents unlocked gradually as your streak climbs, accuracy creeping up the longer you
+  last. Best run is saved. It is the mode for playing on a bus.
+
+**v2.0.0 added: characters, art and a full score.**
 
 - **Seven characters, drawn in code.** Every Vessel and every opponent has a
   hand-built vector portrait — veil, bandage, top hat, porcelain cracks — with rim
